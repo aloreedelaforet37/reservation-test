@@ -393,22 +393,38 @@ form.addEventListener("submit", async e=>{
   </div><br>Nous vous tiendrons informé(e) dès que possible de la disponibilité.`;
   showPopup(messageHtml);
 
-  // EmailJS
-  const emailParams={
-    from_name: "Isabelle - Pension À l'Orée de la Forêt",
-    from_email: "a.l.oree.de.la.foret.37@gmail.com",
-    to_name: reservation.nom_proprietaire,
-    to_email: reservation.email,
-    subject: "Votre réservation a bien été enregistrée",
-    message:`Votre réservation a été enregistrée du ${formatDateFrancais(reservation.date_arrivee,reservation.heure_arrivee)} au ${formatDateFrancais(reservation.date_depart,reservation.heure_depart)}`
-  };
-  try{
-    await emailjs.send("service_22ypgkl","template_i2nke5k",emailParams);
-    console.log("Email envoyé !");
-  } catch(err){
-    console.error("Erreur EmailJS :",err);
-    alert("Erreur lors de l'envoi du mail : " + (err.text||err));
-  }
+// --- EmailJS avec mail HTML chaleureux à la forme passive ---
+const emailParams = {
+  from_name: "À l'Orée de la Forêt",
+  from_email: "a.l.oree.de.la.foret.37@gmail.com",
+  to_name: reservation.nom_proprietaire,
+  to_email: reservation.email,
+  subject: "Confirmation de votre réservation – À l'Orée de la Forêt",
+  message_html: `
+    <div style="font-family:Roboto, sans-serif; color:#4a3c31; line-height:1.5;">
+      <p>Bonjour ${reservation.nom_proprietaire},</p>
+
+      <p>Votre réservation à la pension <strong>À l’Orée de la Forêt</strong> a été enregistrée avec succès.</p>
+
+      <p>Le séjour de vos compagnons est prévu du <strong>${formatDateFrancais(reservation.date_arrivee, reservation.heure_arrivee)}</strong> au <strong>${formatDateFrancais(reservation.date_depart, reservation.heure_depart)}</strong>.</p>
+
+      <p>Vous serez tenu(e) informé(e) dès que possible de la disponibilité finale et de tout détail concernant l’accueil de vos chiens.</p>
+
+      <p>Pour toute question ou précision, n’hésitez pas à me contacter.</p>
+
+      <p style="margin-top:1rem;">Cordialement,<br>Isabelle</p>
+    </div>
+  `
+};
+
+try {
+  await emailjs.send("service_22ypgkl", "template_i2nke5k", emailParams);
+  console.log("Email de confirmation envoyé !");
+} catch(err) {
+  console.error("Erreur EmailJS :", err);
+  alert("Erreur lors de l'envoi du mail : " + (err.text || err));
+}
+
 
   form.reset(); dateArriveeInput.value=todayStr; dateDepartInput.value=todayStr;
   updateNomsChiens(); updateHeures();
@@ -416,3 +432,4 @@ form.addEventListener("submit", async e=>{
 </script>
 </body>
 </html>
+
