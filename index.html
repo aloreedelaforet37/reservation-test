@@ -200,11 +200,11 @@ const periodesFermees = [
   { debut: "2026-12-19", fin: "2026-12-27" }
 ];
 function afficherEncartFermeture() {
-  let contenu = "";
+  let contenu="";
   periodesFermees.forEach(p=>{
-    const options = { day:"numeric", month:"long" };
-    let debut = new Date(p.debut).toLocaleDateString("fr-FR", options).replace(/^1 /,"1er ");
-    let fin = new Date(p.fin).toLocaleDateString("fr-FR", options).replace(/^1 /,"1er ");
+    const options={ day:"numeric", month:"long" };
+    let debut=new Date(p.debut).toLocaleDateString("fr-FR",options).replace(/^1 /,"1er ");
+    let fin=new Date(p.fin).toLocaleDateString("fr-FR",options).replace(/^1 /,"1er ");
     contenu += `Du ${debut} au ${fin}<br>`;
   });
   encartFermeture.innerHTML = contenu;
@@ -215,9 +215,9 @@ afficherEncartFermeture();
 const nbChienInput = document.querySelector('input[name="nb_chien"]');
 const nomsChiensContainer = document.getElementById("nomsChiensContainer");
 function updateNomsChiens() {
-  let nb = parseInt(nbChienInput.value)||1;
+  let nb=parseInt(nbChienInput.value)||1;
   if(nb<1) nb=1;
-  nbChienInput.value = nb;
+  nbChienInput.value=nb;
   nomsChiensContainer.innerHTML="";
   for(let i=1;i<=nb;i++){
     const label=document.createElement("label");
@@ -240,11 +240,50 @@ const todayStr = new Date().toISOString().split("T")[0];
 dateArriveeInput.value=todayStr; dateDepartInput.value=todayStr;
 dateArriveeInput.min=todayStr; dateDepartInput.min=todayStr;
 
-// --- Horaires toutes les 15 minutes ---
+// --- Horaires simplifiés ---
 const horaires = {
-  arrivee: { lundi:["09h00-14h00","16h00-17h00"], mardi:["09h00-14h00","16h00-17h00"], mercredi:["09h00-14h00","17h00-18h45"], jeudi:["09h00-14h00","17h00-18h45"], vendredi:["09h00-14h00","17h00-18h45"], samedi:["10h00-12h00","17h00-18h00"], dimanche:["17h00-18h00"], ferie:["17h00-18h00"] },
-  depart:  { lundi:["09h00-14h00","16h00-17h00"], mardi:["09h00-14h00","16h00-17h00"], mercredi:["09h00-14h00","17h00-18h45"], jeudi:["09h00-14h00","17h00-18h45"], vendredi:["09h00-14h00","17h00-18h45"], samedi:["10h00-12h00","17h00-18h00"], dimanche:["11h00-12h00","17h00-18h00"], ferie:["11h00-12h00","17h00-18h00"] }
+  arrivee: {
+    lundi: [["09:00","14:00"], ["16:00","17:00"]],
+    mardi: [["09:00","14:00"], ["16:00","17:00"]],
+    mercredi: [["09:00","14:00"], ["17:00","18:45"]],
+    jeudi: [["09:00","14:00"], ["17:00","18:45"]],
+    vendredi: [["09:00","14:00"], ["17:00","18:45"]],
+    samedi: [["10:00","12:00"], ["17:00","18:00"]],
+    dimanche: [["17:00","18:00"]],
+    ferie: [["17:00","18:00"]]
+  },
+  depart: {
+    lundi: [["09:00","14:00"], ["16:00","17:00"]],
+    mardi: [["09:00","14:00"], ["16:00","17:00"]],
+    mercredi: [["09:00","14:00"], ["17:00","18:45"]],
+    jeudi: [["09:00","14:00"], ["17:00","18:45"]],
+    vendredi: [["09:00","14:00"], ["17:00","18:45"]],
+    samedi: [["10:00","12:00"], ["17:00","18:00"]],
+    dimanche: [["11:00","12:00"], ["17:00","18:00"]],
+    ferie: [["11:00","12:00"], ["17:00","18:00"]]
+  }
 };
+
+function parseTime(dateStr,timeStr){
+  const [h,m]=timeStr.split(":").map(Number);
+  const date=new Date(dateStr); date.setHours(h,m,0,0);
+  return date;
+}
+
+function generateCreneaux(dateStr,plages){
+  const creneaux=[];
+  plages.forEach(plage=>{
+    let start=parseTime(dateStr,plage[0]);
+    const end=parseTime(dateStr,plage[1]);
+    while(start<=end){
+      const hh=start.getHours().toString().padStart(2,"0");
+      const mm=start.getMinutes().toString().padStart(2,"0");
+      creneaux.push(`${hh}h${mm}`);
+      start.setMinutes(start.getMinutes()+15);
+    }
+  });
+  return creneaux;
+}
 
 function getDayType(dateStr){
   const date=new Date(dateStr);
@@ -254,54 +293,55 @@ function getDayType(dateStr){
     return date>=debut && date<=fin;
   });
   if(isFerie) return "ferie";
-  switch(day){ case 0:return "dimanche"; case 1:return "lundi"; case 2:return "mardi"; case 3:return "mercredi"; case 4:return "jeudi"; case 5:return "vendredi"; case 6:return "samedi"; }
-}
-
-function generateCreneaux(plages){
-  const creneaux=[];
-  plages.forEach(plage=>{
-    const [startStr,endStr]=plage.split("-");
-    let [hStart,mStart]=startStr.split("h").map(Number);
-    let [hEnd,mEnd]=endStr.split("h").map(Number);
-    let date=new Date(); date.setHours(hStart,mStart,0,0);
-    const endDate=new Date(); endDate.setHours(hEnd,mEnd,0,0);
-    while(date<=endDate){
-      const hh=date.getHours().toString().padStart(2,"0");
-      const mm=date.getMinutes().toString().padStart(2,"0");
-      creneaux.push(`${hh}h${mm}`);
-      date.setMinutes(date.getMinutes()+15);
-    }
-  });
-  return creneaux;
+  switch(day){
+    case 0: return "dimanche";
+    case 1: return "lundi";
+    case 2: return "mardi";
+    case 3: return "mercredi";
+    case 4: return "jeudi";
+    case 5: return "vendredi";
+    case 6: return "samedi";
+  }
 }
 
 function updateHeures(){
-  const arrDate=dateArriveeInput.value;
-  const arrPlages=horaires.arrivee[getDayType(arrDate)]||[];
-  const arrCreneaux=generateCreneaux(arrPlages);
+  // Arrivée
+  const arrPlages = horaires.arrivee[getDayType(dateArriveeInput.value)];
+  const arrCreneaux = generateCreneaux(dateArriveeInput.value, arrPlages);
   heureArriveeSelect.innerHTML="";
-  arrCreneaux.forEach(h=>{ const opt=document.createElement("option"); opt.value=h; opt.textContent=h; heureArriveeSelect.appendChild(opt); });
+  arrCreneaux.forEach(h=>{
+    const opt=document.createElement("option"); opt.value=h; opt.textContent=h;
+    heureArriveeSelect.appendChild(opt);
+  });
 
-  const depDate=dateDepartInput.value;
-  const depPlages=horaires.depart[getDayType(depDate)]||[];
-  const depCreneaux=generateCreneaux(depPlages).filter(h=>{
+  // Départ
+  const depPlages = horaires.depart[getDayType(dateDepartInput.value)];
+  const depCreneaux = generateCreneaux(dateDepartInput.value, depPlages).filter(h=>{
     const [h1,m1]=h.split("h").map(Number);
     const [h2,m2]=heureArriveeSelect.value.split("h").map(Number);
-    return h1>h2||(h1===h2&&m1>m2);
+    return dateDepartInput.value>dateArriveeInput.value || h1>h2 || (h1===h2 && m1>m2);
   });
   heureDepartSelect.innerHTML="";
-  depCreneaux.forEach(h=>{ const opt=document.createElement("option"); opt.value=h; opt.textContent=h; heureDepartSelect.appendChild(opt); });
+  depCreneaux.forEach(h=>{
+    const opt=document.createElement("option"); opt.value=h; opt.textContent=h;
+    heureDepartSelect.appendChild(opt);
+  });
   if(depCreneaux.length>0) heureDepartSelect.value=depCreneaux[0];
 }
 
-dateArriveeInput.addEventListener("change",()=>{ if(dateDepartInput.value<dateArriveeInput.value) dateDepartInput.value=dateArriveeInput.value; updateHeures(); });
-heureArriveeSelect.addEventListener("change",updateHeures);
+dateArriveeInput.addEventListener("change", ()=>{
+  if(dateDepartInput.value<dateArriveeInput.value) dateDepartInput.value=dateArriveeInput.value;
+  dateDepartInput.min=dateArriveeInput.value;
+  updateHeures();
+});
+dateDepartInput.addEventListener("change", updateHeures);
+heureArriveeSelect.addEventListener("change", updateHeures);
 
-// --- Popup ---
+// --- Popup & format date ---
 function formatDateFrancais(dateStr, heureStr){
   const date=new Date(dateStr+"T"+heureStr);
   const options={ day:"2-digit", month:"long", year:"numeric" };
-  return date.toLocaleDateString("fr-FR", options)+` à ${date.getHours().toString().padStart(2,"0")}h${date.getMinutes().toString().padStart(2,"0")}`;
+  return date.toLocaleDateString("fr-FR",options)+` à ${date.getHours().toString().padStart(2,"0")}h${date.getMinutes().toString().padStart(2,"0")}`;
 }
 function showPopup(message){
   const popup=document.createElement("div"); popup.classList.add("popup");
