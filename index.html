@@ -129,8 +129,19 @@ button:hover {
   text-align:left;
 }
 .popup-content button {
-  margin-top:1rem;
-  width:auto;
+  background: linear-gradient(135deg, var(--vert-clair), var(--vert-fonce));
+  color: white;
+  border: none;
+  padding: 0.8rem 1rem;
+  border-radius: 14px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 1rem;
+}
+.popup-content button:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 </style>
 </head>
@@ -186,7 +197,7 @@ button:hover {
 const SUPABASE_URL = 'https://usatdvopaaxrxjiqhgju.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzYXRkdm9wYWF4cnhqaXFoZ2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MjUzNDUsImV4cCI6MjA3NTEwMTM0NX0.D52GPw5yZUJWN1oZD_sop7F7nU9WZLM5OMof1TI3IMc';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-emailjs.init("VOTRE_CLE_EMAILJS");
+emailjs.init("t6YY80T3DDql9uy32"); // 🔑 Remplacer par votre vraie clé EmailJS
 
 // --- Fermetures ---
 const encartFermeture = document.getElementById("encartFermeture");
@@ -305,7 +316,6 @@ function getDayType(dateStr){
 }
 
 function updateHeures(){
-  // Arrivée
   const arrPlages = horaires.arrivee[getDayType(dateArriveeInput.value)];
   const arrCreneaux = generateCreneaux(dateArriveeInput.value, arrPlages);
   heureArriveeSelect.innerHTML="";
@@ -314,7 +324,6 @@ function updateHeures(){
     heureArriveeSelect.appendChild(opt);
   });
 
-  // Départ
   const depPlages = horaires.depart[getDayType(dateDepartInput.value)];
   const depCreneaux = generateCreneaux(dateDepartInput.value, depPlages).filter(h=>{
     const [h1,m1]=h.split("h").map(Number);
@@ -336,13 +345,16 @@ dateArriveeInput.addEventListener("change", ()=>{
 });
 dateDepartInput.addEventListener("change", updateHeures);
 heureArriveeSelect.addEventListener("change", updateHeures);
+updateHeures();
 
 // --- Popup & format date ---
 function formatDateFrancais(dateStr, heureStr){
-  const date=new Date(dateStr+"T"+heureStr);
+  const heureCorrecte = heureStr.replace("h", ":"); // "09h00" -> "09:00"
+  const date = new Date(dateStr+"T"+heureCorrecte);
   const options={ day:"2-digit", month:"long", year:"numeric" };
-  return date.toLocaleDateString("fr-FR",options)+` à ${date.getHours().toString().padStart(2,"0")}h${date.getMinutes().toString().padStart(2,"0")}`;
+  return date.toLocaleDateString("fr-FR", options)+` à ${date.getHours().toString().padStart(2,"0")}h${date.getMinutes().toString().padStart(2,"0")}`;
 }
+
 function showPopup(message){
   const popup=document.createElement("div"); popup.classList.add("popup");
   popup.innerHTML=`<div class="popup-content">${message}<button id="closePopup">OK</button></div>`;
@@ -378,7 +390,7 @@ form.addEventListener("submit", async e=>{
   <div style="margin-left:20px;">
   du <strong>${formatDateFrancais(reservation.date_arrivee,reservation.heure_arrivee)}</strong><br>
   au <strong>${formatDateFrancais(reservation.date_depart,reservation.heure_depart)}</strong>
-  </div><br>Nous vous tiendrons informé(e) dès que possible de la disponibilité.<br><br`;
+  </div><br>Nous vous tiendrons informé(e) dès que possible de la disponibilité.`;
   showPopup(messageHtml);
 
   // EmailJS
@@ -390,13 +402,17 @@ form.addEventListener("submit", async e=>{
     subject: "Votre réservation a bien été enregistrée",
     message:`Votre réservation a été enregistrée du ${formatDateFrancais(reservation.date_arrivee,reservation.heure_arrivee)} au ${formatDateFrancais(reservation.date_depart,reservation.heure_depart)}`
   };
-  try{ await emailjs.send("service_22ypgkl","template_i2nke5k",emailParams); } catch(err){ console.error("Erreur EmailJS :",err); }
+  try{
+    await emailjs.send("service_22ypgkl","template_i2nke5k",emailParams);
+    console.log("Email envoyé !");
+  } catch(err){
+    console.error("Erreur EmailJS :",err);
+    alert("Erreur lors de l'envoi du mail : " + (err.text||err));
+  }
 
   form.reset(); dateArriveeInput.value=todayStr; dateDepartInput.value=todayStr;
   updateNomsChiens(); updateHeures();
 });
-updateHeures();
 </script>
 </body>
 </html>
-
