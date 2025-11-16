@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Liste des réservations</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: 'Roboto', sans-serif; background: #e6f2ea; padding:2rem; }
+    h1 { font-family: 'Pacifico', cursive; color: #4a3c31; text-align:center; }
+    table { width:100%; border-collapse: collapse; margin-top:2rem; background:#fffaf0; border-radius:12px; overflow:hidden; box-shadow:0 4px 12px rgba(0,0,0,0.1);}
+    th, td { padding:0.8rem; border-bottom:1px solid #c9b6a4; text-align:left; }
+    th { background:#9ec8a7; color:white; }
+    tr:last-child td { border-bottom:none; }
+    tr:hover { background:#e6f2ea; }
+    #logoutBtn { margin-top:1rem; padding:0.7rem 1rem; background:#9ec8a7; color:white; border:none; border-radius:8px; cursor:pointer; display:block; margin-left:auto; margin-right:auto; }
+    #logoutBtn:hover { background:#5c8a63; }
+  </style>
+</head>
+<body>
+  <h1>Liste des réservations</h1>
+  <button id="logoutBtn">Se déconnecter</button>
+  <table id="reservationsTable">
+    <thead>
+      <tr>
+        <th>Nom propriétaire</th>
+        <th>Email</th>
+        <th>Nombre de chiens</th>
+        <th>Noms des chiens</th>
+        <th>Date arrivée</th>
+        <th>Heure arrivée</th>
+        <th>Date départ</th>
+        <th>Heure départ</th>
+        <th>Remarque</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const SUPABASE_URL='https://usatdvopaaxrxjiqhgju.supabase.co';
+    const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzYXRkdm9wYWF4cnhqaXFoZ2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MjUzNDUsImV4cCI6MjA3NTEwMTM0NX0.D52GPw5yZUJWN1oZD_sop7F7nU9WZLM5OMof1TI3IMc';
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // --- Vérification de session OAuth ---
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if(!session){
+        window.location.href = "login.html";
+      }
+    });
+
+    const logoutBtn = document.getElementById("logoutBtn");
+    logoutBtn.addEventListener("click", async () => {
+      await supabase.auth.signOut();
+      window.location.href = "login.html";
+    });
+
+    // --- Charger les réservations ---
+    async function loadReservations() {
+      try {
+        const { data: reservations, error } = await supabase
+          .from('reservations')
+          .select('*')
+          .order('date_arrivee', { ascending:true });
+        
+        if(error) { console.error(error); return; }
+
+        const tbody = document.querySelector("#reservationsTable tbody");
+        tbody.innerHTML = "";
+
+        reservations.forEach(res => {
+          const tr = document.createElement("tr");
+          const nomsChiens = Array.isArray(res.nom_chien) ? res.nom_chien.join(", ") : "";
+          tr.innerHTML = `
+            <td>${res.nom_proprietaire}</td>
+            <td>${res.email}</td>
+            <td>${res.nb_chien}</td>
+            <td>${nomsChiens}</td>
+            <td>${res.date_arrivee}</td>
+            <td>${res.heure_arrivee}</td>
+            <td>${res.date_depart}</td>
+            <td>${res.heure_depart}</td>
+            <td>${res.remarque || ""}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch(err) {
+        console.error(err);
+      }
+    }
+
+    loadReservations();
+  </script>
+</body>
+</html>
