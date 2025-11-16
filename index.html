@@ -120,6 +120,11 @@ button:hover {
   justify-content:center;
   align-items:center;
   z-index:9999;
+  opacity:0;
+  animation: fadeIn 0.3s forwards;
+}
+@keyframes fadeIn {
+  to { opacity: 1; }
 }
 .popup-content {
   background:#fff;
@@ -127,6 +132,11 @@ button:hover {
   border-radius:12px;
   max-width:400px;
   text-align:left;
+  transform: translateY(-20px);
+  animation: slideDown 0.3s forwards;
+}
+@keyframes slideDown {
+  to { transform: translateY(0); }
 }
 .popup-content button {
   background: linear-gradient(135deg, var(--vert-clair), var(--vert-fonce));
@@ -197,7 +207,7 @@ button:hover {
 const SUPABASE_URL = 'https://usatdvopaaxrxjiqhgju.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzYXRkdm9wYWF4cnhqaXFoZ2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MjUzNDUsImV4cCI6MjA3NTEwMTM0NX0.D52GPw5yZUJWN1oZD_sop7F7nU9WZLM5OMof1TI3IMc';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-emailjs.init("t6YY80T3DDql9uy32"); // 🔑 Remplacer par votre vraie clé EmailJS
+emailjs.init("VOTRE_CLE_EMAILJS"); // 🔑 Remplacer par votre vraie clé EmailJS
 
 // --- Fermetures ---
 const encartFermeture = document.getElementById("encartFermeture");
@@ -246,7 +256,6 @@ const dateArriveeInput=document.getElementById("dateArrivee");
 const dateDepartInput=document.getElementById("dateDepart");
 const heureArriveeSelect=document.getElementById("heureArrivee");
 const heureDepartSelect=document.getElementById("heureDepart");
-
 const todayStr = new Date().toISOString().split("T")[0];
 dateArriveeInput.value=todayStr; dateDepartInput.value=todayStr;
 dateArriveeInput.min=todayStr; dateDepartInput.min=todayStr;
@@ -349,7 +358,7 @@ updateHeures();
 
 // --- Popup & format date ---
 function formatDateFrancais(dateStr, heureStr){
-  const heureCorrecte = heureStr.replace("h", ":"); // "09h00" -> "09:00"
+  const heureCorrecte = heureStr.replace("h", ":");
   const date = new Date(dateStr+"T"+heureCorrecte);
   const options={ day:"2-digit", month:"long", year:"numeric" };
   return date.toLocaleDateString("fr-FR", options)+` à ${date.getHours().toString().padStart(2,"0")}h${date.getMinutes().toString().padStart(2,"0")}`;
@@ -381,11 +390,13 @@ form.addEventListener("submit", async e=>{
   for(let i=1;i<=reservation.nb_chien;i++) reservation.nom_chien.push(formData.get(`nom_chien_input_${i}`));
   reservation.nom_chien=reservation.nom_chien.join(",");
 
+  // --- Enregistrement en base ---
   try{
     const {error}=await supabaseClient.from("reservations").insert([reservation]);
     if(error){ alert("Erreur en base : "+error.message); return; }
   } catch(err){ alert("Erreur en base : "+(err.message||err)); return; }
 
+  // --- Popup ---
   const messageHtml=`Votre réservation a été enregistrée avec succès<br>
   <div style="margin-left:20px;">
   du <strong>${formatDateFrancais(reservation.date_arrivee,reservation.heure_arrivee)}</strong><br>
@@ -393,38 +404,36 @@ form.addEventListener("submit", async e=>{
   </div><br>Nous vous tiendrons informé(e) dès que possible de la disponibilité.`;
   showPopup(messageHtml);
 
-// --- EmailJS avec mail HTML chaleureux à la forme passive ---
-const emailParams = {
-  from_name: "À l'Orée de la Forêt",
-  from_email: "a.l.oree.de.la.foret.37@gmail.com",
-  to_name: reservation.nom_proprietaire,
-  to_email: reservation.email,
-  subject: "Confirmation de votre réservation – À l'Orée de la Forêt",
-  message_html: `
-    <div style="font-family:Roboto, sans-serif; color:#4a3c31; line-height:1.5;">
-      <p>Bonjour ${reservation.nom_proprietaire},</p>
+  // --- EmailJS avec adaptation au nombre de chiens ---
+  const chiensTexte = reservation.nb_chien > 1 ? "vos compagnons" : "votre compagnon";
+  const emailParams = {
+    from_name: "Isabelle - Pension À l'Orée de la Forêt",
+    from_email: "a.l.oree.de.la.foret.37@gmail.com",
+    to_email: reservation.email,
+    subject: "Confirmation de votre réservation – À l'Orée de la Forêt",
+    message_html: `
+      <div style="font-family:Roboto, sans-serif; color:#4a3c31; line-height:1.5;">
+        <p>Bonjour</p>
 
-      <p>Votre réservation à la pension <strong>À l’Orée de la Forêt</strong> a été enregistrée avec succès.</p>
+        <p>Votre réservation à la pension <strong>À l’Orée de la Forêt</strong> a été enregistrée avec succès.</p>
 
-      <p>Le séjour de vos compagnons est prévu du <strong>${formatDateFrancais(reservation.date_arrivee, reservation.heure_arrivee)}</strong> au <strong>${formatDateFrancais(reservation.date_depart, reservation.heure_depart)}</strong>.</p>
+        <p>Le séjour de ${chiensTexte} est prévu <br>du <strong>${formatDateFrancais(reservation.date_arrivee, reservation.heure_arrivee)}</strong> <br>au <strong>${formatDateFrancais(reservation.date_depart, reservation.heure_depart)}</strong>.</p>
 
-      <p>Vous serez tenu(e) informé(e) dès que possible de la disponibilité finale et de tout détail concernant l’accueil de vos chiens.</p>
+        <p>Vous serez tenu(e) informé(e) dès que possible de la disponibilité.</p
 
-      <p>Pour toute question ou précision, n’hésitez pas à me contacter.</p>
+        <p>Pour toute question ou précision, n’hésitez pas à me contacter.</p>
 
-      <p style="margin-top:1rem;">Cordialement,<br>Isabelle</p>
-    </div>
-  `
-};
-
-try {
-  await emailjs.send("service_22ypgkl", "template_i2nke5k", emailParams);
-  console.log("Email de confirmation envoyé !");
-} catch(err) {
-  console.error("Erreur EmailJS :", err);
-  alert("Erreur lors de l'envoi du mail : " + (err.text || err));
-}
-
+        <p style="margin-top:1rem;">Cordialement,<br>Isabelle</p>
+      </div>
+    `
+  };
+  try{
+    await emailjs.send("service_22ypgkl","template_i2nke5k",emailParams);
+    console.log("Email de confirmation envoyé !");
+  } catch(err){
+    console.error("Erreur EmailJS :",err);
+    alert("Erreur lors de l'envoi du mail : " + (err.text||err));
+  }
 
   form.reset(); dateArriveeInput.value=todayStr; dateDepartInput.value=todayStr;
   updateNomsChiens(); updateHeures();
@@ -432,4 +441,3 @@ try {
 </script>
 </body>
 </html>
-
