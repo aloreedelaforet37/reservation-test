@@ -406,27 +406,26 @@ form.addEventListener("submit", async e=>{
 
   // --- EmailJS avec adaptation au nombre de chiens ---
   const chiensTexte = reservation.nb_chien > 1 ? "vos compagnons" : "votre compagnon";
-  const emailParams = {
-    from_name: "Isabelle - Pension À l'Orée de la Forêt",
-    from_email: "a.l.oree.de.la.foret.37@gmail.com",
-    to_email: reservation.email,
-    subject: "Confirmation de votre réservation – À l'Orée de la Forêt",
-    message_html: `
-      <div style="font-family:Roboto, sans-serif; color:#4a3c31; line-height:1.5;">
-        <p>Bonjour</p>
+  // Préparer les paramètres du mail
+const emailParams = {
+  from_name: "Isabelle - Pension À l'Orée de la Forêt",
+  from_email: "a.l.oree.de.la.foret.37@gmail.com",
+  to_email: reservation.email,
+  chiensTexte: reservation.nb_chien > 1 ? "vos compagnons" : "votre compagnon",
+  date_arrivee: new Date(reservation.date_arrivee).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" }),
+  heure_arrivee: reservation.heure_arrivee,
+  date_depart: new Date(reservation.date_depart).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" }),
+  heure_depart: reservation.heure_depart
+};
 
-        <p>Votre réservation à la pension <strong>À l’Orée de la Forêt</strong> a été enregistrée avec succès.</p>
-
-        <p>Le séjour de ${chiensTexte} est prévu <br>du <strong>${formatDateFrancais(reservation.date_arrivee, reservation.heure_arrivee)}</strong> <br>au <strong>${formatDateFrancais(reservation.date_depart, reservation.heure_depart)}</strong>.</p>
-
-        <p>Vous serez tenu(e) informé(e) dès que possible de la disponibilité.</p
-
-        <p>Pour toute question ou précision, n’hésitez pas à me contacter.</p>
-
-        <p style="margin-top:1rem;">Cordialement,<br>Isabelle</p>
-      </div>
-    `
-  };
+// Envoyer le mail via EmailJS
+emailjs.send("service_22ypgkl", "template_i2nke5k", emailParams)
+  .then(response => {
+    console.log("Email de confirmation envoyé !", response.status, response.text);
+  })
+  .catch(err => {
+    console.error("Erreur EmailJS :", err);
+  });
   try{
     await emailjs.send("service_22ypgkl","template_i2nke5k",emailParams);
     console.log("Email de confirmation envoyé !");
@@ -441,4 +440,5 @@ form.addEventListener("submit", async e=>{
 </script>
 </body>
 </html>
+
 
