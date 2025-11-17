@@ -408,6 +408,7 @@ form.addEventListener("submit", async e=>{
   const chiensTexte = reservation.nb_chien > 1 ? "vos compagnons" : "votre compagnon";
   // Préparer les paramètres du mail
 const emailParams = {
+  subject: "Votre réservation a bien été enregistrée",
   from_name: "Isabelle - Pension À l'Orée de la Forêt",
   from_email: "a.l.oree.de.la.foret.37@gmail.com",
   to_email: reservation.email,
@@ -440,5 +441,6 @@ emailjs.send("service_22ypgkl", "template_i2nke5k", emailParams)
 </script>
 </body>
 </html>
+
 
 
