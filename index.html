@@ -420,13 +420,6 @@ const emailParams = {
 };
 
 // Envoyer le mail via EmailJS
-emailjs.send("service_22ypgkl", "template_i2nke5k", emailParams)
-  .then(response => {
-    console.log("Email de confirmation envoyé !", response.status, response.text);
-  })
-  .catch(err => {
-    console.error("Erreur EmailJS :", err);
-  });
   try{
     await emailjs.send("service_22ypgkl","template_i2nke5k",emailParams);
     console.log("Email de confirmation envoyé !");
@@ -441,6 +434,7 @@ emailjs.send("service_22ypgkl", "template_i2nke5k", emailParams)
 </script>
 </body>
 </html>
+
 
 
 
