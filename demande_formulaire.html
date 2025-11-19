@@ -33,63 +33,10 @@
   </form>
 </div>
 
-<!-- Chargement Supabase AVANT script.js -->
+<!-- Chargement Supabase et EmailJS AVANT script.js -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 <script src="script.js"></script>
-
-<script>
-/* Popup animée */
-function showPopup(message) {
-  const popup = document.createElement('div');
-  popup.className = 'popup';
-  popup.innerHTML = `
-    <div class="popup-content">
-      ${message}
-      <button id="closePopup">OK</button>
-    </div>`;
-  document.body.appendChild(popup);
-
-  document.getElementById('closePopup').addEventListener('click', () => {
-    popup.remove();
-    document.getElementById('proprietaire').focus();
-  });
-}
-
-/* Gestion formulaire */
-document.getElementById('animalForm').addEventListener('submit', async e => {
-  e.preventDefault();
-
-  const proprietaire = document.getElementById('proprietaire').value.trim();
-  const email = document.getElementById('email').value.trim();
-  const nom_animal = document.getElementById('nom_animal').value.trim();
-
-  if(!proprietaire || !email || !nom_animal){
-    showPopup("Veuillez remplir tous les champs.");
-    return;
-  }
-
-  try {
-    const { error } = await supabaseClient.from('demande_formulaire').insert([
-      {
-        date_soumission: new Date().toISOString(),
-        proprietaire,
-        email,
-        nom_animal,
-        transfere: false
-      }
-    ]);
-
-    if(error) throw error;
-
-    showPopup("Votre demande a été enregistrée !");
-    document.getElementById('animalForm').reset();
-
-  } catch(err) {
-    showPopup("Erreur lors de l'enregistrement : " + err.message);
-  }
-});
-</script>
 
 <style>
 /* Styles popup animée */
@@ -104,9 +51,7 @@ document.getElementById('animalForm').addEventListener('submit', async e => {
   opacity:0;
   animation: fadeIn 0.3s forwards;
 }
-
 @keyframes fadeIn { to { opacity: 1; } }
-
 .popup-content {
   background:#fff;
   padding:1.8rem 2rem;
@@ -116,9 +61,7 @@ document.getElementById('animalForm').addEventListener('submit', async e => {
   transform: translateY(-20px);
   animation: slideDown 0.3s forwards;
 }
-
 @keyframes slideDown { to { transform: translateY(0); } }
-
 .popup-content button {
   background: linear-gradient(135deg, var(--vert-clair), var(--vert-fonce));
   color: white;
@@ -131,7 +74,6 @@ document.getElementById('animalForm').addEventListener('submit', async e => {
   margin-top: 1rem;
   transition: transform 0.1s ease, box-shadow 0.1s ease;
 }
-
 .popup-content button:hover {
   transform: scale(1.02);
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
