@@ -23,17 +23,18 @@ window.addEventListener('DOMContentLoaded', () => {
     { debut: "2026-10-16", fin: "2026-10-24" },
     { debut: "2026-12-19", fin: "2026-12-27" }
   ];
-  function afficherEncartFermeture() {
-    let contenu = "";
-    periodesFermees.forEach(p => {
-      const options = { day: "numeric", month: "long" };
-      let debut = new Date(p.debut).toLocaleDateString("fr-FR", options).replace(/^1 /, "1er ");
-      let fin = new Date(p.fin).toLocaleDateString("fr-FR", options).replace(/^1 /, "1er ");
-      contenu += `Du ${debut} au ${fin}<br>`;
-    });
-    encartFermeture.innerHTML = contenu;
-  }
-  afficherEncartFermeture();
+
+function afficherEncartFermeture() {
+  if (!encartFermeture) return; // <-- quitte la fonction si l'élément n'existe pas
+  let contenu = "";
+  periodesFermees.forEach(p => {
+    const options = { day:"numeric", month:"long" };
+    let debut = new Date(p.debut).toLocaleDateString("fr-FR", options).replace(/^1 /,"1er ");
+    let fin = new Date(p.fin).toLocaleDateString("fr-FR", options).replace(/^1 /,"1er ");
+    contenu += `Du ${debut} au ${fin}<br>`;
+  });
+  encartFermeture.innerHTML = contenu;
+}
 
   // --- Noms chiens dynamiques ---
   const nbChienInput = document.querySelector('input[name="nb_chien"]');
