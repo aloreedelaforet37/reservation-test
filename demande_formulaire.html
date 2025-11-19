@@ -33,8 +33,10 @@
   </form>
 </div>
 
-<!-- Scripts -->
-<script src="script.js"></script> <!-- contient supabaseClient -->
+<!-- Chargement Supabase AVANT script.js -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="script.js"></script>
+
 <script>
 /* Popup animée */
 function showPopup(message) {
@@ -49,7 +51,7 @@ function showPopup(message) {
 
   document.getElementById('closePopup').addEventListener('click', () => {
     popup.remove();
-    document.getElementById('proprietaire').focus(); // focus sur le premier champ
+    document.getElementById('proprietaire').focus();
   });
 }
 
@@ -68,7 +70,13 @@ document.getElementById('animalForm').addEventListener('submit', async e => {
 
   try {
     const { error } = await supabaseClient.from('demande_formulaire').insert([
-      { date_soumission: new Date().toISOString(), proprietaire, email, nom_animal, transfere: false }
+      {
+        date_soumission: new Date().toISOString(),
+        proprietaire,
+        email,
+        nom_animal,
+        transfere: false
+      }
     ]);
 
     if(error) throw error;
@@ -128,5 +136,6 @@ document.getElementById('animalForm').addEventListener('submit', async e => {
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 </style>
+
 </body>
 </html>
