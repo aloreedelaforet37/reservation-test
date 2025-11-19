@@ -25,4 +25,55 @@
     <span class="subtitle-script">Demande de formulaire</span>
   </h1>
 
-  <form id=
+  <form id="animalForm">
+    <label>Prénom et nom du propriétaire</label>
+    <input type="text" id="proprietaire" name="proprietaire" required />
+
+    <label>Email</label>
+    <input type="email" id="email" name="email" required />
+
+    <label>Nom de votre compagnon</label>
+    <input type="text" id="nom_animal" name="nom_animal" required />
+
+    <button type="submit">Envoyer la demande</button>
+  </form>
+
+  <div id="message"></div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://<SUPABASE_URL>';
+const SUPABASE_ANON_KEY = '<eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzYXRkdm9wYWF4cnhqaXFoZ2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MjUzNDUsImV4cCI6MjA3NTEwMTM0NX0.D52GPw5yZUJWN1oZD_sop7F7nU9WZLM5OMof1TI3IMc>';
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+document.getElementById('animalForm').addEventListener('submit', async e => {
+  e.preventDefault();
+
+  const proprietaire = document.getElementById('proprietaire').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const nom_animal = document.getElementById('nom_animal').value.trim();
+
+  if(!proprietaire || !email || !nom_animal){
+    document.getElementById('message').textContent = "Veuillez remplir tous les champs.";
+    document.getElementById('message').className = "error";
+    return;
+  }
+
+  try {
+    const { error } = await supabaseClient.from('demande_formulaire').insert([
+      { date_soumission: new Date().toISOString(), proprietaire, email, nom_animal, transfere: false }
+    ]);
+
+    if(error) throw error;
+
+    document.getElementById('message').textContent = "Votre demande a été enregistrée !";
+    document.getElementById('message').className = "success";
+    document.getElementById('animalForm').reset();
+  } catch(err) {
+    document.getElementById('message').textContent = "Erreur lors de l'enregistrement : " + err.message;
+    document.getElementById('message').className = "error";
+  }
+});
+</script>
+</body>
+</html>
