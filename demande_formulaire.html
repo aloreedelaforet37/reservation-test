@@ -7,58 +7,6 @@
 
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<style>
-/* Popup animation */
-.popup {
-  position: fixed;
-  top:0; left:0; right:0; bottom:0;
-  background: rgba(0,0,0,0.4);
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  z-index:9999;
-  opacity:0;
-  animation: fadeIn 0.3s forwards;
-}
-
-@keyframes fadeIn {
-  to { opacity: 1; }
-}
-
-.popup-content {
-  background:#fff;
-  padding:1.8rem 2rem;
-  border-radius:12px;
-  max-width:400px;
-  text-align:left;
-  transform: translateY(-20px);
-  animation: slideDown 0.3s forwards;
-}
-
-@keyframes slideDown {
-  to { transform: translateY(0); }
-}
-
-.popup-content button {
-  background: linear-gradient(135deg, var(--vert-clair), var(--vert-fonce));
-  color: white;
-  border: none;
-  padding: 0.8rem 1rem;
-  border-radius: 14px;
-  font-size: 1.1rem;
-  font-weight: bold;
-  cursor: pointer;
-  margin-top: 1rem;
-  transition: transform 0.1s ease, box-shadow 0.1s ease;
-}
-
-.popup-content button:hover {
-  transform: scale(1.02);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-</style>
 </head>
 
 <body>
@@ -85,12 +33,10 @@
   </form>
 </div>
 
+<!-- Scripts -->
+<script src="script.js"></script> <!-- contient supabaseClient -->
 <script>
-const SUPABASE_URL = 'https://<SUPABASE_URL>';
-const SUPABASE_ANON_KEY = '<eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzYXRkdm9wYWF4cnhqaXFoZ2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MjUzNDUsImV4cCI6MjA3NTEwMTM0NX0.D52GPw5yZUJWN1oZD_sop7F7nU9WZLM5OMof1TI3IMc>';
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// Fonction pour créer une popup animée avec focus automatique
+/* Popup animée */
 function showPopup(message) {
   const popup = document.createElement('div');
   popup.className = 'popup';
@@ -103,11 +49,11 @@ function showPopup(message) {
 
   document.getElementById('closePopup').addEventListener('click', () => {
     popup.remove();
-    // Focus automatique sur le premier champ du formulaire
-    document.getElementById('proprietaire').focus();
+    document.getElementById('proprietaire').focus(); // focus sur le premier champ
   });
 }
 
+/* Gestion formulaire */
 document.getElementById('animalForm').addEventListener('submit', async e => {
   e.preventDefault();
 
@@ -135,5 +81,52 @@ document.getElementById('animalForm').addEventListener('submit', async e => {
   }
 });
 </script>
+
+<style>
+/* Styles popup animée */
+.popup {
+  position: fixed;
+  top:0; left:0; right:0; bottom:0;
+  background: rgba(0,0,0,0.4);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index:9999;
+  opacity:0;
+  animation: fadeIn 0.3s forwards;
+}
+
+@keyframes fadeIn { to { opacity: 1; } }
+
+.popup-content {
+  background:#fff;
+  padding:1.8rem 2rem;
+  border-radius:12px;
+  max-width:400px;
+  text-align:left;
+  transform: translateY(-20px);
+  animation: slideDown 0.3s forwards;
+}
+
+@keyframes slideDown { to { transform: translateY(0); } }
+
+.popup-content button {
+  background: linear-gradient(135deg, var(--vert-clair), var(--vert-fonce));
+  color: white;
+  border: none;
+  padding: 0.8rem 1rem;
+  border-radius: 14px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.popup-content button:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+</style>
 </body>
 </html>
