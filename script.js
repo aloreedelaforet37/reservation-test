@@ -1,8 +1,15 @@
+// --- Supabase GLOBAL ---
+// (Accessible pour toutes les pages)
+window.supabaseClient = supabase.createClient(
+  "https://usatdvopaaxrxjiqhgju.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzYXRkdm9wYWF4cnhqaXFoZ2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MjUzNDUsImV4cCI6MjA3NTEwMTM0NX0.D52GPw5yZUJWN1oZD_sop7F7nU9WZLM5OMof1TI3IMc"
+);
+
+
 window.addEventListener('DOMContentLoaded', () => {
   // --- Supabase & EmailJS ---
   const SUPABASE_URL = 'https://usatdvopaaxrxjiqhgju.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzYXRkdm9wYWF4cnhqaXFoZ2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MjUzNDUsImV4cCI6MjA3NTEwMTM0NX0.D52GPw5yZUJWN1oZD_sop7F7nU9WZLM5OMof1TI3IMc';
-  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   emailjs.init("t6YY80T3DDql9uy32");
 
   // --- Fermetures ---
