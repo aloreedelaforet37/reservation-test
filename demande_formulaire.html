@@ -5,14 +5,60 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Demande Formulaire - À l'Orée de la Forêt</title>
 
-<!-- Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
-
-<!-- CSS externe -->
 <link rel="stylesheet" href="style.css">
-
-<!-- Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+/* Popup animation */
+.popup {
+  position: fixed;
+  top:0; left:0; right:0; bottom:0;
+  background: rgba(0,0,0,0.4);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index:9999;
+  opacity:0;
+  animation: fadeIn 0.3s forwards;
+}
+
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+
+.popup-content {
+  background:#fff;
+  padding:1.8rem 2rem;
+  border-radius:12px;
+  max-width:400px;
+  text-align:left;
+  transform: translateY(-20px);
+  animation: slideDown 0.3s forwards;
+}
+
+@keyframes slideDown {
+  to { transform: translateY(0); }
+}
+
+.popup-content button {
+  background: linear-gradient(135deg, var(--vert-clair), var(--vert-fonce));
+  color: white;
+  border: none;
+  padding: 0.8rem 1rem;
+  border-radius: 14px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.popup-content button:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+</style>
 </head>
 
 <body>
@@ -37,14 +83,30 @@
 
     <button type="submit">Envoyer la demande</button>
   </form>
-
-  <div id="message"></div>
 </div>
 
 <script>
 const SUPABASE_URL = 'https://<SUPABASE_URL>';
-const SUPABASE_ANON_KEY = '<eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzYXRkdm9wYWF4cnhqaXFoZ2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MjUzNDUsImV4cCI6MjA3NTEwMTM0NX0.D52GPw5yZUJWN1oZD_sop7F7nU9WZLM5OMof1TI3IMc>';
+const SUPABASE_ANON_KEY = '<SUPABASE_ANON_KEY>';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Fonction pour créer une popup animée avec focus automatique
+function showPopup(message) {
+  const popup = document.createElement('div');
+  popup.className = 'popup';
+  popup.innerHTML = `
+    <div class="popup-content">
+      ${message}
+      <button id="closePopup">OK</button>
+    </div>`;
+  document.body.appendChild(popup);
+
+  document.getElementById('closePopup').addEventListener('click', () => {
+    popup.remove();
+    // Focus automatique sur le premier champ du formulaire
+    document.getElementById('proprietaire').focus();
+  });
+}
 
 document.getElementById('animalForm').addEventListener('submit', async e => {
   e.preventDefault();
@@ -54,24 +116,22 @@ document.getElementById('animalForm').addEventListener('submit', async e => {
   const nom_animal = document.getElementById('nom_animal').value.trim();
 
   if(!proprietaire || !email || !nom_animal){
-    document.getElementById('message').textContent = "Veuillez remplir tous les champs.";
-    document.getElementById('message').className = "error";
+    showPopup("Veuillez remplir tous les champs.");
     return;
   }
 
   try {
-    const { error } = await supabaseClient.from('demande_formulaire').insert([
+    const { error } = await supabaseClient.from('demandes_animaux').insert([
       { date_soumission: new Date().toISOString(), proprietaire, email, nom_animal, transfere: false }
     ]);
 
     if(error) throw error;
 
-    document.getElementById('message').textContent = "Votre demande a été enregistrée !";
-    document.getElementById('message').className = "success";
+    showPopup("Votre demande a été enregistrée !");
     document.getElementById('animalForm').reset();
+
   } catch(err) {
-    document.getElementById('message').textContent = "Erreur lors de l'enregistrement : " + err.message;
-    document.getElementById('message').className = "error";
+    showPopup("Erreur lors de l'enregistrement : " + err.message);
   }
 });
 </script>
