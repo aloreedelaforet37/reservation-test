@@ -121,7 +121,7 @@ document.getElementById('animalForm').addEventListener('submit', async e => {
   }
 
   try {
-    const { error } = await supabaseClient.from('demandes_animaux').insert([
+    const { error } = await supabaseClient.from('demande_formulaire').insert([
       { date_soumission: new Date().toISOString(), proprietaire, email, nom_animal, transfere: false }
     ]);
 
