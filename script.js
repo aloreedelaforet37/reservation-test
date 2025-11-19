@@ -135,16 +135,24 @@ window.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      try {
-        const { error } = await supabaseClient.from('demande_formulaire').insert([
-          { date_soumission: new Date().toISOString(), proprietaire, email, nom_animal, transfere: false }
-        ]);
-        if (error) throw error;
-        showPopup("Votre demande a été enregistrée !");
-        formAnimal.reset();
-      } catch(err) {
-        showPopup("Erreur lors de l'enregistrement : " + (err.message || err));
-      }
+try {
+  const { data, error } = await supabaseClient
+    .from('demande_formulaire')
+    .insert([{ date_soumission: new Date().toISOString(), proprietaire, email, nom_animal, transfere: false }]);
+
+  if (error) {
+    console.error("Supabase error:", error);
+    showPopup("Erreur lors de l'enregistrement : " + error.message);
+    return;
+  }
+
+  showPopup("Votre demande a été enregistrée !");
+  form.reset();
+
+} catch(err) {
+  showPopup("Erreur inattendue : " + (err.message || err));
+}
+
     });
   }
 
