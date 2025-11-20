@@ -78,8 +78,6 @@ window.addEventListener('DOMContentLoaded', () => {
       return periodesFermees.some(p => {
         const f1 = new Date(p.debut);
         const f2 = new Date(p.fin);
-
-        // séjour commence avant la fermeture et se termine après
         return dA < f1 && dD > f2;
       });
     }
@@ -108,6 +106,7 @@ window.addEventListener('DOMContentLoaded', () => {
       return new Date(dateStr).toLocaleDateString("fr-FR", { weekday: "long" });
     }
 
+    // --- Création SELECT horaires avec PAS DE 15 MIN ---
     function fillHours(selectElem, liste) {
       selectElem.innerHTML = "";
       for (let i = 0; i < liste.length; i += 2) {
@@ -121,7 +120,7 @@ window.addEventListener('DOMContentLoaded', () => {
           selectElem.appendChild(opt);
 
           let [h, m] = hour.split(":").map(Number);
-          m += 30;
+          m += 15; // <-- 15 minutes
           if (m >= 60) { h++; m = 0; }
           hour = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
         }
