@@ -60,14 +60,17 @@ window.addEventListener('DOMContentLoaded', () => {
       const nb = parseInt(nbChienInput.value) || 1;
       nomsChiensContainer.innerHTML = "";
       for (let i = 1; i <= nb; i++) {
+        const div = document.createElement("div");
+        div.className = "chien-field";
         const label = document.createElement("label");
         label.textContent = nb === 1 ? "Nom du chien" : `Nom chien ${i}`;
         const input = document.createElement("input");
         input.type = "text";
         input.name = `nom_chien_input_${i}`;
         input.required = true;
-        nomsChiensContainer.appendChild(label);
-        nomsChiensContainer.appendChild(input);
+        div.appendChild(label);
+        div.appendChild(input);
+        nomsChiensContainer.appendChild(div);
       }
     }
     updateNomChiens();
@@ -178,12 +181,10 @@ window.addEventListener('DOMContentLoaded', () => {
       };
       for (let i = 1; i <= reservation.nb_chien; i++) reservation.nom_chien.push(formData.get(`nom_chien_input_${i}`));
 
-      // --- Format nom_chien avec virgules et "et" ---
-      if (reservation.nom_chien.length === 1) {
-        reservation.nom_chien = reservation.nom_chien[0];
-      } else if (reservation.nom_chien.length === 2) {
-        reservation.nom_chien = reservation.nom_chien.join(" et ");
-      } else {
+      // --- Format nom_chien pour Supabase ---
+      if (reservation.nom_chien.length === 1) reservation.nom_chien = reservation.nom_chien[0];
+      else if (reservation.nom_chien.length === 2) reservation.nom_chien = reservation.nom_chien.join(" et ");
+      else {
         const last = reservation.nom_chien.pop();
         reservation.nom_chien = reservation.nom_chien.join(", ") + " et " + last;
       }
@@ -192,21 +193,37 @@ window.addEventListener('DOMContentLoaded', () => {
         const { error } = await supabaseClient.from("reservations").insert([reservation]);
         if (error) throw error;
 
+        // --- Format dates pour email ---
+        function formatDateTime(dateStr, heureStr) {
+          const options = { day: "2-digit", month: "long", year: "numeric" };
+          const date = new Date(dateStr);
+          const dateFormatted = date.toLocaleDateString("fr-FR", options);
+          return `${dateFormatted} à ${heureStr}h00`;
+        }
+
+        const dateArriveeEmail = `Du ${formatDateTime(reservation.date_arrivee, reservation.heure_arrivee)}`;
+        const dateDepartEmail = `Au ${formatDateTime(reservation.date_depart, reservation.heure_depart)}`;
+
         emailjs.send("service_22ypgkl","template_i2nke5k",{
           to_email: reservation.email,
+          subject: "Votre réservation a bien été enregistrée",
           nom: reservation.nom_proprietaire,
           chiens: reservation.nom_chien,
-          date_arrivee: reservation.date_arrivee,
-          heure_arrivee: reservation.heure_arrivee,
-          date_depart: reservation.date_depart,
-          heure_depart: reservation.heure_depart
+          date_arrivee: dateArriveeEmail,
+          date_depart: dateDepartEmail
         })
-        .then(()=>{ showPopup("Votre réservation a été enregistrée ! Un email de confirmation vous a été envoyé."); })
-        .catch((err)=>{ console.error("Erreur EmailJS :", err); showPopup("Votre réservation a été enregistrée, mais l'email n'a pas pu être envoyé."); });
+        .then(() => {
+          showPopup("Votre réservation a été enregistrée ! Un email de confirmation vous a été envoyé.");
+        })
+        .catch((err) => {
+          console.error("Erreur EmailJS :", err);
+          showPopup("Votre réservation a été enregistrée, mais l'email n'a pas pu être envoyé.");
+        });
 
         formReservation.reset();
         updateNomChiens();
         updateHoraires();
+
       } catch(err) {
         showPopup("Erreur en base : "+(err.message||err));
       }
