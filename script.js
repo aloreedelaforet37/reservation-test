@@ -5,10 +5,10 @@ window.addEventListener('DOMContentLoaded', () => {
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzYXRkdm9wYWF4cnhqaXFoZ2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MjUzNDUsImV4cCI6MjA3NTEwMTM0NX0.D52GPw5yZUJWN1oZD_sop7F7nU9WZLM5OMof1TI3IMc';
   const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // EmailJS
+  // --- EmailJS ---
   if (typeof emailjs !== "undefined") emailjs.init("t6YY80T3DDql9uy32");
 
-  // Popup
+  // --- Popup ---
   function showPopup(message) {
     const popup = document.createElement('div');
     popup.className = 'popup';
@@ -74,7 +74,6 @@ window.addEventListener('DOMContentLoaded', () => {
     function crossesClosure(dateA, dateD) {
       const dA = new Date(dateA);
       const dD = new Date(dateD);
-
       return periodesFermees.some(p => {
         const f1 = new Date(p.debut);
         const f2 = new Date(p.fin);
@@ -90,7 +89,7 @@ window.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // --- Gestion horaires par jour ---
+    // --- Horaires par jour ---
     const horaires = {
       lundi: ["09:00", "14:00", "16:00", "17:00"],
       mardi: ["09:00", "14:00", "16:00", "17:00"],
@@ -112,7 +111,6 @@ window.addEventListener('DOMContentLoaded', () => {
       for (let i = 0; i < liste.length; i += 2) {
         let hour = liste[i];
         const fin = liste[i + 1];
-
         while (hour <= fin) {
           const opt = document.createElement("option");
           opt.value = hour;
@@ -185,7 +183,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     updateHoraires();
 
-    // --- Envoi en base ---
+    // --- Envoi en base + EmailJS ---
     formReservation.addEventListener("submit", async e => {
       e.preventDefault();
 
@@ -211,7 +209,24 @@ window.addEventListener('DOMContentLoaded', () => {
         const { error } = await supabaseClient.from("reservations").insert([reservation]);
         if (error) throw error;
 
-        showPopup("Votre réservation a été enregistrée !");
+        // --- Envoi email confirmation via EmailJS ---
+        emailjs.send("service_nvpa4nd", "template_i04foge", {
+          to_email: reservation.email,
+          nom: reservation.nom_proprietaire,
+          chiens: reservation.nom_chien,
+          date_arrivee: reservation.date_arrivee,
+          heure_arrivee: reservation.heure_arrivee,
+          date_depart: reservation.date_depart,
+          heure_depart: reservation.heure_depart,
+        })
+        .then(() => {
+          showPopup("Votre réservation a été enregistrée ! Un email de confirmation vous a été envoyé.");
+        })
+        .catch((err) => {
+          console.error("Erreur EmailJS :", err);
+          showPopup("Votre réservation a été enregistrée, mais l'email de confirmation n'a pas pu être envoyé.");
+        });
+
         formReservation.reset();
 
       } catch(err) {
