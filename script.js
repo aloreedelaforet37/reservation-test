@@ -210,7 +210,7 @@ window.addEventListener('DOMContentLoaded', () => {
         if (error) throw error;
 
         // --- Envoi email confirmation via EmailJS ---
-        emailjs.send("service_nvpa4nd", "template_i04foge", {
+        emailjs.send("service_22ypgkl", "template_i2nke5k", {
           to_email: reservation.email,
           nom: reservation.nom_proprietaire,
           chiens: reservation.nom_chien,
