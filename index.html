@@ -10,6 +10,40 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+
+<style>
+  /* --- Styles pour les champs des chiens --- */
+  #nomsChiensContainer {
+    margin-bottom: 20px;
+  }
+  .chien-field {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 10px;
+  }
+  .chien-field label {
+    font-weight: 500;
+    margin-bottom: 3px;
+  }
+  .chien-field input {
+    padding: 6px 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+  .datetime-group {
+    margin-bottom: 15px;
+  }
+  .datetime-fields {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  select, input[type="date"], input[type="number"], textarea {
+    padding: 6px 8px;
+    font-size: 14px;
+  }
+</style>
 </head>
 
 <body>
@@ -30,10 +64,13 @@
   <form id="reservationForm">
     <label>Nom et prénom du propriétaire</label>
     <input type="text" name="nom_proprietaire" required />
+
     <label>Email</label>
     <input type="email" name="email" required />
+
     <label>Nombre de chiens</label>
     <input type="number" name="nb_chien" min="1" value="1" required />
+
     <div id="nomsChiensContainer"></div>
 
     <div class="datetime-group">
