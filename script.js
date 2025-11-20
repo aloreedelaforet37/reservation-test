@@ -208,7 +208,7 @@ window.addEventListener('DOMContentLoaded', () => {
           to_email: reservation.email,
           subject: "Votre réservation a bien été enregistrée",
           nom: reservation.nom_proprietaire,
-          chiens: reservation.nom_chien,
+          Nomchiens: reservation.nom_chien,
           date_arrivee: dateArriveeEmail,
           date_depart: dateDepartEmail
         })
