@@ -130,7 +130,7 @@ window.addEventListener('DOMContentLoaded', () => {
         while (hour <= fin) {
           const opt = document.createElement("option");
           opt.value = hour;
-          opt.textContent = hour.replace(":", "h");
+          opt.textContent = hour.replace(":", "h"); // Affichage 17h30
           selectElem.appendChild(opt);
           let [h, m] = hour.split(":").map(Number);
           m += 15;
@@ -198,7 +198,7 @@ window.addEventListener('DOMContentLoaded', () => {
           const options = { day: "2-digit", month: "long", year: "numeric" };
           const date = new Date(dateStr);
           const dateFormatted = date.toLocaleDateString("fr-FR", options);
-          return `${dateFormatted} à ${heureStr}h00`;
+          return `${dateFormatted} à ${heureStr.replace(":", "h")}`; // Format 17h30
         }
 
         const dateArriveeEmail = `Du ${formatDateTime(reservation.date_arrivee, reservation.heure_arrivee)}`;
