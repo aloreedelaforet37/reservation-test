@@ -210,7 +210,7 @@ window.addEventListener('DOMContentLoaded', () => {
           from_email: "a.l.oree.de.la.foret.37@gmail.com",
           subject: "Votre réservation a bien été enregistrée",
           nom: reservation.nom_proprietaire,
-          Nomchiens: reservation.nom_chien,
+          nomChiens: reservation.nom_chien,
           date_arrivee: dateArriveeEmail,
           date_depart: dateDepartEmail
         })
