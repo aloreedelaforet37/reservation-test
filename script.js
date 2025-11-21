@@ -206,6 +206,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
         emailjs.send("service_22ypgkl","template_i2nke5k",{
           to_email: reservation.email,
+          from_name: "Isabelle - Pension À l'Orée de la Forêt",
+          from_email: "a.l.oree.de.la.foret.37@gmail.com",
           subject: "Votre réservation a bien été enregistrée",
           nom: reservation.nom_proprietaire,
           Nomchiens: reservation.nom_chien,
