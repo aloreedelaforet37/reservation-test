@@ -32,9 +32,9 @@ body {
 
 .header-images {
   display: flex;
-  align-items: center;   
-  gap: 20px;             
-  justify-content: center; 
+  flex-direction: column;   /* <<< empile les images verticalement */
+  align-items: center;
+  gap: 10px;                 /* espace entre les images */
 }
 
 /* Taille spécifique pour le logo */
