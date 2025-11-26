@@ -45,7 +45,7 @@ body {
 
 /* Taille spécifique pour reservationVacances.jpg */
 .header-images img.second-image {
-  max-width: 250px;  /* plus grand */
+  max-width: 280px;  /* plus grand */
   height: auto;
 }
 
