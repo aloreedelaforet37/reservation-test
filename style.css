@@ -39,13 +39,13 @@ body {
 
 /* Taille spécifique pour le logo */
 .header-images img.logo {
-  max-width: 50px;   /* plus petit */
+  max-width: 80px;   /* plus petit */
   height: auto;
 }
 
 /* Taille spécifique pour reservationVacances.jpg */
 .header-images img.second-image {
-  max-width: 200px;  /* plus grand */
+  max-width: 220px;  /* plus grand */
   height: auto;
 }
 
