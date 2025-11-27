@@ -1,5 +1,5 @@
 :root {
-  --vert-clair: #86bbd4;
+  --vert-clair: #6ed2ca;  /* fond général, si tu veux un vert-bleu pastel */
   --vert-fonce: #5c8a63;
   --brun-texte: #4a3c31;
 }
@@ -24,45 +24,44 @@ body {
   text-align: center;
 }
 
-.form-container img {
-  max-width: 140px;
-  height: auto;
-  margin-bottom: 1rem;
-}
-
+/* --- Header images et titre --- */
 .header-images {
   display: flex;
-  flex-direction: column;   /* <<< empile les images verticalement */
+  flex-direction: column;       /* empile verticalement */
   align-items: center;
-  gap: 10px;                 /* espace entre les images */
+  gap: 12px;                    /* espace entre les éléments */
+  background: #86bbd4;          /* fond bleu doux derrière le header */
+  padding: 1rem 2rem;
+  border-radius: 20px;
 }
 
-/* Taille spécifique pour le logo */
 .header-images img.logo {
-  max-width: 100px;   /* plus petit */
+  max-width: 80px;
   height: auto;
 }
 
-/* Taille spécifique pour reservationVacances.jpg */
 .header-images img.second-image {
-  max-width: 280px;  /* plus grand */
+  max-width: 220px;
   height: auto;
+  border-radius: 12px;
 }
 
-h1 {
-  color: var(--brun-texte);
+.header-images h1 {
+  text-align: center;
+  color: white;
   font-size: 1.5rem;
-  margin-bottom: 1rem;
   line-height: 1.3;
+  margin: 0;
 }
 
-.subtitle-script {
+.header-images .subtitle-script {
   display: block;
   font-size: 0.85rem;
-  color: var(--brun-texte);
+  color: #f0f0f0;  /* sous-titres blanc cassé */
   margin-top: 0.3rem;
 }
 
+/* --- Formulaire et encarts --- */
 #encartFermeture {
   border: 2px solid #b6dab8;
   border-radius: 12px;
@@ -94,12 +93,7 @@ input, select, textarea {
 }
 
 button {
-  background: linear-gradient(
-    135deg,
-    #86bbd4 0%,
-    #3b87a6 50%,
-    #86bbd4 100%
-  );
+  background: linear-gradient(135deg, #86bbd4 0%, #3b87a6 50%, #86bbd4 100%);
   color: white;
   border: none;
   padding: 0.8rem 1rem;
@@ -158,7 +152,7 @@ button:hover {
 }
 
 .popup-content button {
-  background: linear-gradient(135deg, var(--vert-clair), var(--vert-fonce));
+  background: linear-gradient(135deg, #86bbd4 0%, #3b87a6 50%, #86bbd4 100%);
   color: white;
   border: none;
   padding: 0.8rem 1rem;
@@ -172,4 +166,37 @@ button:hover {
 .popup-content button:hover {
   transform: scale(1.02);
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* --- Styles chiens dynamiques --- */
+#nomsChiensContainer {
+  margin-bottom: 20px;
+}
+.chien-field {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 10px;
+}
+.chien-field label {
+  font-weight: 500;
+  margin-bottom: 3px;
+}
+.chien-field input {
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.datetime-group {
+  margin-bottom: 15px;
+}
+.datetime-fields {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+select, input[type="date"], input[type="number"], textarea {
+  padding: 6px 8px;
+  font-size: 14px;
 }
