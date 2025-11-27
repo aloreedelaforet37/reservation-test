@@ -60,7 +60,7 @@ h1 {
   display: block;
   font-size: 0.85rem;
   color: var(--brun-texte);
-  margin-top: 0.1rem;
+  margin-top: 2px;
 }
 
 #encartFermeture {
