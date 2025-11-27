@@ -94,9 +94,9 @@ input, select, textarea {
 }
 
 button {
-  background: #f7f7f2;     /* blanc cassé */
-  color: var(--brun-texte);
-  border: 1px solid #dcd9d2;
+  background: linear-gradient(135deg, #86bbd4, #5fa3c4);
+  color: white;
+  border: none;
   padding: 0.8rem 1rem;
   border-radius: 14px;
   font-size: 1.1rem;
@@ -109,7 +109,7 @@ button {
 
 button:hover {
   transform: scale(1.02);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 #message { margin-top: 1rem; font-weight: 500; }
