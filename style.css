@@ -53,14 +53,16 @@ h1 {
   color: var(--brun-texte);
   font-size: 1.5rem;
   margin-bottom: 1rem;
-  line-height: 1.3;
+  line-height: 1.1; /* réduit encore l’espacement vertical */
 }
 
 .subtitle-script {
   display: block;
   font-size: 0.85rem;
   color: var(--brun-texte);
-  margin-top: 0;
+  margin: 0;       /* aucun espace avant ou après */
+  padding: 0;      /* au cas où un thème ajoute du padding */
+  line-height: 1;  /* colle totalement les lignes */
 }
 
 #encartFermeture {
