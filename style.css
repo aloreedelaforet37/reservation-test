@@ -74,6 +74,14 @@ h1 {
   background: #fff;
 }
 
+label.fermeture-title {
+  display: block;
+  font-weight: bold;
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+  color: var(--brun-texte);
+}
+
 label {
   display: block;
   text-align: left;
