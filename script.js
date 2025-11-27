@@ -36,13 +36,14 @@ window.addEventListener('DOMContentLoaded', () => {
   if (encartFermeture) {
     let contenu = "";
     periodesFermees.forEach(p => {
-      const options = { day:"numeric", month:"long" };
+      const options = { day: "numeric", month: "long", year: "numeric" }; // <-- ajout de year
       let debut = new Date(p.debut).toLocaleDateString("fr-FR", options).replace(/^1 /,"1er ");
       let fin = new Date(p.fin).toLocaleDateString("fr-FR", options).replace(/^1 /,"1er ");
       contenu += `Du ${debut} au ${fin}<br>`;
     });
     encartFermeture.innerHTML = contenu;
   }
+
 
   // --- Formulaire réservation ---
   const formReservation = document.getElementById("reservationForm");
