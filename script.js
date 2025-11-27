@@ -232,3 +232,38 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
+// --- Formulaire Demande Formulaire ---
+const demandeFormulaireForm = document.getElementById("demandeFormulaireForm");
+
+if (demandeFormulaireForm) {
+  demandeFormulaireForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(demandeFormulaireForm);
+
+    const data = {
+      date_soumission: new Date().toISOString(),
+      proprietaire: formData.get("proprietaire"),
+      email: formData.get("email"),
+      nom_animal: formData.get("nom_animal"),
+      transfere: false  // valeur par défaut
+    };
+
+    try {
+      const { error } = await supabaseClient
+        .from("demande_formulaire")
+        .insert([data]);
+
+      if (error) throw error;
+
+      showPopup("Votre demande a bien été enregistrée !");
+      demandeFormulaireForm.reset();
+
+    } catch (err) {
+      showPopup("Erreur lors de l’enregistrement : " + (err.message || err));
+    }
+  });
+}
+
+
