@@ -60,8 +60,8 @@ h1 {
   display: block;
   font-size: 0.85rem;
   color: var(--brun-texte);
-  margin: 2px 0;   /* léger espace entre les lignes */
-  line-height: 1.15;
+  margin: 6px 0;     /* espace plus grand */
+  line-height: 1.2;  /* léger confort visuel */
 }
 
 #encartFermeture {
