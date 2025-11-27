@@ -94,7 +94,7 @@ input, select, textarea {
 }
 
 button {
-  background: linear-gradient(135deg, #86bbd4, #5fa3c4);
+  background: linear-gradient(135deg, #86bbd4, #5fa3c4, #3b87a6);
   color: white;
   border: none;
   padding: 0.8rem 1rem;
