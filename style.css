@@ -60,9 +60,8 @@ h1 {
   display: block;
   font-size: 0.85rem;
   color: var(--brun-texte);
-  margin: 0;       /* aucun espace avant ou après */
-  padding: 0;      /* au cas où un thème ajoute du padding */
-  line-height: 1;  /* colle totalement les lignes */
+  margin: 2px 0;   /* léger espace entre les lignes */
+  line-height: 1.15;
 }
 
 #encartFermeture {
