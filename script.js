@@ -190,7 +190,13 @@ window.addEventListener('DOMContentLoaded', () => {
       }
 
       try {
-        const { error } = await supabaseClient.from("reservations").insert([reservation]);
+        const { data: insertedData, error } = await supabaseClient
+            .from("demande_formulaire")
+            .insert([data])
+            .select();
+        
+        console.log("Insert retour:", insertedData, error);
+        
         if (error) throw error;
 
         // --- Format dates pour email ---
