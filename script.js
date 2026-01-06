@@ -90,6 +90,13 @@ window.addEventListener('DOMContentLoaded', () => {
     return new Date(year, month - 1, day);
   }
 
+  function formatLocalDate(d) {
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
   function getJoursFeries(year) {
     const jours = [];
 
@@ -109,8 +116,9 @@ window.addEventListener('DOMContentLoaded', () => {
     const ascension = new Date(paques); ascension.setDate(paques.getDate() + 39);
     const pentecote = new Date(paques); pentecote.setDate(paques.getDate() + 50);
 
-    const format = d => d.toISOString().split("T")[0];
-    jours.push(format(lundiPaques), format(ascension), format(pentecote));
+    jours.push(formatLocalDate(lundiPaques));
+    jours.push(formatLocalDate(ascension));
+    jours.push(formatLocalDate(pentecote));
 
     return jours;
   }
