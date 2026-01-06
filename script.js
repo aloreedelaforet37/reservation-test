@@ -44,7 +44,7 @@ window.addEventListener('DOMContentLoaded', () => {
     encartFermeture.innerHTML = contenu;
   }
 
-  // --- Fonctions de fermeture des dates ---
+  // --- Fonctions fermeture / jours fériés ---
   function isClosed(dateStr) {
     const date = new Date(dateStr);
     return periodesFermees.some(p => {
@@ -62,6 +62,56 @@ window.addEventListener('DOMContentLoaded', () => {
       const f2 = new Date(p.fin);
       return dA < f1 && dD > f2;
     });
+  }
+
+  // --- Jours fériés calculés automatiquement ---
+  function getEasterDate(year) {
+    const a = year % 19;
+    const b = Math.floor(year / 100);
+    const c = year % 100;
+    const d = Math.floor(b / 4);
+    const e = b % 4;
+    const f = Math.floor((b + 8) / 25);
+    const g = Math.floor((b - f + 1) / 3);
+    const h = (19*a + b - d - g + 15) % 30;
+    const i = Math.floor(c / 4);
+    const k = c % 4;
+    const l = (32 + 2*e + 2*i - h - k) % 7;
+    const m = Math.floor((a + 11*h + 22*l) / 451);
+    const month = Math.floor((h + l - 7*m + 114) / 31);
+    const day = ((h + l - 7*m + 114) % 31) + 1;
+    return new Date(year, month - 1, day);
+  }
+
+  function getJoursFeries(year) {
+    const jours = [];
+
+    // Jours fixes
+    jours.push(`${year}-01-01`); // Nouvel An
+    jours.push(`${year}-05-01`); // Fête du Travail
+    jours.push(`${year}-05-08`); // Victoire 1945
+    jours.push(`${year}-07-14`); // Fête nationale
+    jours.push(`${year}-08-15`); // Assomption
+    jours.push(`${year}-11-01`); // Toussaint
+    jours.push(`${year}-11-11`); // Armistice
+    jours.push(`${year}-12-25`); // Noël
+
+    // Jours mobiles
+    const paques = getEasterDate(year);
+    const lundiPaques = new Date(paques); lundiPaques.setDate(paques.getDate() + 1);
+    const ascension = new Date(paques); ascension.setDate(paques.getDate() + 39);
+    const pentecote = new Date(paques); pentecote.setDate(paques.getDate() + 50);
+
+    const format = d => d.toISOString().split("T")[0];
+    jours.push(format(lundiPaques), format(ascension), format(pentecote));
+
+    return jours;
+  }
+
+  function isJourFerie(dateStr) {
+    const year = new Date(dateStr).getFullYear();
+    const joursFeries = getJoursFeries(year);
+    return joursFeries.includes(dateStr);
   }
 
   function checkClosed(dateInput) {
@@ -82,7 +132,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const heureDepart = document.getElementById("heureDepart");
     const nbChienInput = formReservation.querySelector('input[name="nb_chien"]');
 
-    // --- Horaires
+    // --- Horaires ---
     const horaires = {
       lundi: ["09:00","14:00","16:00","17:00"],
       mardi: ["09:00","14:00","16:00","17:00"],
@@ -143,25 +193,48 @@ window.addEventListener('DOMContentLoaded', () => {
 
     function updateHoraires() {
       if (!dateArrivee.value || !dateDepart.value) return;
-      const jourA = new Date(dateArrivee.value).toLocaleDateString("fr-FR", { weekday: "long" });
-      const jourD = new Date(dateDepart.value).toLocaleDateString("fr-FR", { weekday: "long" });
-      if (jourA === "dimanche") fillHours(heureArrivee, horaires.dimanche_arrivee);
-      else fillHours(heureArrivee, horaires[jourA]);
-      if (jourD === "dimanche") fillHours(heureDepart, horaires.dimanche_depart);
-      else fillHours(heureDepart, horaires[jourD]);
+
+      // --- Arrivée ---
+      if (isClosed(dateArrivee.value)) {
+        heureArrivee.innerHTML = "";
+      } else if (isJourFerie(dateArrivee.value)) {
+        fillHours(heureArrivee, [["17:00","18:00"]]);
+      } else {
+        const jourA = new Date(dateArrivee.value).toLocaleDateString("fr-FR", { weekday: "long" });
+        if (jourA === "dimanche") fillHours(heureArrivee, horaires.dimanche_arrivee);
+        else fillHours(heureArrivee, horaires[jourA]);
+      }
+
+      // --- Départ ---
+      if (isClosed(dateDepart.value)) {
+        heureDepart.innerHTML = "";
+      } else if (isJourFerie(dateDepart.value)) {
+        fillHours(heureDepart, [["11:00","12:00"], ["17:00","18:00"]]);
+      } else {
+        const jourD = new Date(dateDepart.value).toLocaleDateString("fr-FR", { weekday: "long" });
+        if (jourD === "dimanche") fillHours(heureDepart, horaires.dimanche_depart);
+        else fillHours(heureDepart, horaires[jourD]);
+      }
     }
 
     dateArrivee.addEventListener("change", () => {
       checkClosed(dateArrivee);
       dateDepart.min = dateArrivee.value;
       if (dateDepart.value < dateArrivee.value) dateDepart.value = dateArrivee.value;
-      if (crossesClosure(dateArrivee.value,dateDepart.value)) { alert("Votre séjour ne peut pas traverser une période de fermeture."); dateArrivee.value = ""; }
+      if (crossesClosure(dateArrivee.value,dateDepart.value)) { 
+        alert("Votre séjour ne peut pas traverser une période de fermeture."); 
+        dateArrivee.value = ""; 
+      }
       updateHoraires();
     });
+
     dateDepart.addEventListener("change", () => {
       checkClosed(dateDepart);
       if (dateDepart.value < dateArrivee.value) dateDepart.value = dateArrivee.value;
-      if (crossesClosure(dateArrivee.value,dateDepart.value)) { alert("Votre séjour ne peut pas traverser une période de fermeture."); dateDepart.value = ""; }
+      if (crossesClosure(dateArrivee.value,dateDepart.value)) { 
+        alert("Votre séjour ne peut pas traverser une période de fermeture."); 
+        dateDepart.value = ""; 
+      }
       updateHoraires();
     });
 
@@ -193,7 +266,7 @@ window.addEventListener('DOMContentLoaded', () => {
       }
 
       try {
-        // Insert dans Supabase (table reservations)
+        // Insert dans Supabase
         const { error } = await supabaseClient.from("reservations").insert([reservation]);
         if (error) throw error;
 
@@ -208,33 +281,4 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- Formulaire Demande Formulaire ---
-  const demandeFormulaireForm = document.getElementById("demandeFormulaireForm");
-  if (demandeFormulaireForm) {
-    demandeFormulaireForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const formData = new FormData(demandeFormulaireForm);
-
-      const data = {
-        date_soumission: new Date().toISOString(),
-        proprietaire: formData.get("proprietaire"),
-        email: formData.get("email"),
-        nom_animal: formData.get("nom_animal"),
-        transfere: false
-      };
-
-      try {
-        const { error } = await supabaseClient
-          .from("demande_formulaire")
-          .insert([data]);
-
-        if (error) throw error;
-        showPopup("Votre demande a bien été enregistrée !");
-        demandeFormulaireForm.reset();
-
-      } catch(err) {
-        showPopup("Erreur lors de l’enregistrement : " + (err.message || err));
-      }
-    });
-  }
 });
