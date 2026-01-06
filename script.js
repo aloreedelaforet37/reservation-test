@@ -34,7 +34,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   const encartFermeture = document.getElementById("encartFermeture");
   if (encartFermeture) {
-    let contenu = `<strong>Périodes de fermeture :</strong><br>`;
+    let contenu = `<strong>Pour information, la pension sera fermée aux périodes suivantes :</strong><br>`;
     periodesFermees.forEach(p => {
       const options = { day: "numeric", month: "long", year: "numeric" };
       let debut = new Date(p.debut).toLocaleDateString("fr-FR", options).replace(/^1 /,"1er ");
