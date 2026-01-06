@@ -198,7 +198,7 @@ window.addEventListener('DOMContentLoaded', () => {
     function updateHoraires() {
       if (!dateArrivee.value || !dateDepart.value) return;
 
-      // Arrivée
+      // --- Arrivée ---
       if (isClosed(dateArrivee.value)) {
         heureArrivee.innerHTML = "";
       } else if (isJourFerie(dateArrivee.value)) {
@@ -209,7 +209,7 @@ window.addEventListener('DOMContentLoaded', () => {
         else fillHours(heureArrivee, chunkArray(horaires[jourA],2));
       }
 
-      // Départ
+      // --- Départ ---
       if (isClosed(dateDepart.value)) {
         heureDepart.innerHTML = "";
       } else if (isJourFerie(dateDepart.value)) {
@@ -244,7 +244,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     updateHoraires();
 
-    // Submit réservation
+    // --- Submit réservation ---
     formReservation.addEventListener("submit", async e => {
       e.preventDefault();
       const formData = new FormData(formReservation);
