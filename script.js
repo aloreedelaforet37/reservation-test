@@ -191,31 +191,42 @@ window.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    function updateHoraires() {
-      if (!dateArrivee.value || !dateDepart.value) return;
+function updateHoraires() {
+  if (!dateArrivee.value || !dateDepart.value) return;
 
-      // --- Arrivée ---
-      if (isClosed(dateArrivee.value)) {
-        heureArrivee.innerHTML = "";
-      } else if (isJourFerie(dateArrivee.value)) {
-        fillHours(heureArrivee, [["17:00","18:00"]]);
-      } else {
-        const jourA = new Date(dateArrivee.value).toLocaleDateString("fr-FR", { weekday: "long" });
-        if (jourA === "dimanche") fillHours(heureArrivee, horaires.dimanche_arrivee);
-        else fillHours(heureArrivee, horaires[jourA]);
-      }
+  // --- Arrivée ---
+  if (isClosed(dateArrivee.value)) {
+    heureArrivee.innerHTML = "";
+  } else if (isJourFerie(dateArrivee.value)) {
+    // jours fériés : 17h-18h
+    fillHours(heureArrivee, [["17:00","18:00"]]);
+  } else {
+    const jourA = new Date(dateArrivee.value).toLocaleDateString("fr-FR", { weekday: "long" });
+    if (jourA === "dimanche") fillHours(heureArrivee, horaires.dimanche_arrivee.map(h => [h, h]));
+    else fillHours(heureArrivee, chunkArray(horaires[jourA], 2));
+  }
 
-      // --- Départ ---
-      if (isClosed(dateDepart.value)) {
-        heureDepart.innerHTML = "";
-      } else if (isJourFerie(dateDepart.value)) {
-        fillHours(heureDepart, [["11:00","12:00"], ["17:00","18:00"]]);
-      } else {
-        const jourD = new Date(dateDepart.value).toLocaleDateString("fr-FR", { weekday: "long" });
-        if (jourD === "dimanche") fillHours(heureDepart, horaires.dimanche_depart);
-        else fillHours(heureDepart, horaires[jourD]);
-      }
-    }
+  // --- Départ ---
+  if (isClosed(dateDepart.value)) {
+    heureDepart.innerHTML = "";
+  } else if (isJourFerie(dateDepart.value)) {
+    // jours fériés : 11-12 puis 17-18
+    fillHours(heureDepart, [["11:00","12:00"], ["17:00","18:00"]]);
+  } else {
+    const jourD = new Date(dateDepart.value).toLocaleDateString("fr-FR", { weekday: "long" });
+    if (jourD === "dimanche") fillHours(heureDepart, horaires.dimanche_depart.map(h => [h, h]));
+    else fillHours(heureDepart, chunkArray(horaires[jourD], 2));
+  }
+}
+
+// --- utilitaire pour transformer un tableau plat en tableau de paires [start,end] ---
+function chunkArray(arr, size) {
+  const result = [];
+  for (let i = 0; i < arr.length; i += size) {
+    result.push(arr.slice(i, i + size));
+  }
+  return result;
+}
 
     dateArrivee.addEventListener("change", () => {
       checkClosed(dateArrivee);
