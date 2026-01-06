@@ -44,7 +44,7 @@ window.addEventListener('DOMContentLoaded', () => {
     encartFermeture.innerHTML = contenu;
   }
 
-  // --- Fonctions fermeture / jours fériés ---
+  // --- Fonctions fermeture ---
   function isClosed(dateStr) {
     const date = new Date(dateStr);
     return periodesFermees.some(p => {
@@ -64,7 +64,14 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- Jours fériés calculés automatiquement ---
+  function checkClosed(dateInput) {
+    if (isClosed(dateInput.value)) {
+      alert("La pension est fermée à cette date. Merci d'en choisir une autre.");
+      dateInput.value = "";
+    }
+  }
+
+  // --- Jours fériés calcul automatique ---
   function getEasterDate(year) {
     const a = year % 19;
     const b = Math.floor(year / 100);
@@ -114,13 +121,6 @@ window.addEventListener('DOMContentLoaded', () => {
     return joursFeries.includes(dateStr);
   }
 
-  function checkClosed(dateInput) {
-    if (isClosed(dateInput.value)) {
-      alert("La pension est fermée à cette date. Merci d'en choisir une autre.");
-      dateInput.value = "";
-    }
-  }
-
   // --- Formulaire Réservation ---
   const formReservation = document.getElementById("reservationForm");
   const nomsChiensContainer = document.getElementById("nomsChiensContainer");
@@ -132,7 +132,6 @@ window.addEventListener('DOMContentLoaded', () => {
     const heureDepart = document.getElementById("heureDepart");
     const nbChienInput = formReservation.querySelector('input[name="nb_chien"]');
 
-    // --- Horaires ---
     const horaires = {
       lundi: ["09:00","14:00","16:00","17:00"],
       mardi: ["09:00","14:00","16:00","17:00"],
@@ -144,7 +143,6 @@ window.addEventListener('DOMContentLoaded', () => {
       dimanche_depart: ["11:00","12:00","17:00","18:00"]
     };
 
-    // --- Gestion dynamique noms chiens ---
     function updateNomChiens() {
       const nb = parseInt(nbChienInput.value) || 1;
       nomsChiensContainer.innerHTML = "";
@@ -165,20 +163,18 @@ window.addEventListener('DOMContentLoaded', () => {
     updateNomChiens();
     nbChienInput.addEventListener("change", updateNomChiens);
 
-    // --- Préselection aujourd'hui ---
     const todayStr = new Date().toISOString().split("T")[0];
     dateArrivee.value = todayStr;
     dateDepart.value = todayStr;
     dateArrivee.min = todayStr;
     dateDepart.min = todayStr;
 
-    // --- Gestion horaires 15 min ---
     function fillHours(selectElem, liste) {
       selectElem.innerHTML = "";
-      for (let i = 0; i < liste.length; i += 2) {
-        let hour = liste[i];
-        const fin = liste[i + 1];
-        while (hour <= fin) {
+      for (let i = 0; i < liste.length; i++) {
+        let [start, end] = liste[i];
+        let hour = start;
+        while (hour <= end) {
           const opt = document.createElement("option");
           opt.value = hour;
           opt.textContent = hour.replace(":", "h");
@@ -191,42 +187,39 @@ window.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-function updateHoraires() {
-  if (!dateArrivee.value || !dateDepart.value) return;
+    function chunkArray(arr, size) {
+      const result = [];
+      for (let i = 0; i < arr.length; i += size) {
+        result.push(arr.slice(i, i + size));
+      }
+      return result;
+    }
 
-  // --- Arrivée ---
-  if (isClosed(dateArrivee.value)) {
-    heureArrivee.innerHTML = "";
-  } else if (isJourFerie(dateArrivee.value)) {
-    // jours fériés : 17h-18h
-    fillHours(heureArrivee, [["17:00","18:00"]]);
-  } else {
-    const jourA = new Date(dateArrivee.value).toLocaleDateString("fr-FR", { weekday: "long" });
-    if (jourA === "dimanche") fillHours(heureArrivee, horaires.dimanche_arrivee.map(h => [h, h]));
-    else fillHours(heureArrivee, chunkArray(horaires[jourA], 2));
-  }
+    function updateHoraires() {
+      if (!dateArrivee.value || !dateDepart.value) return;
 
-  // --- Départ ---
-  if (isClosed(dateDepart.value)) {
-    heureDepart.innerHTML = "";
-  } else if (isJourFerie(dateDepart.value)) {
-    // jours fériés : 11-12 puis 17-18
-    fillHours(heureDepart, [["11:00","12:00"], ["17:00","18:00"]]);
-  } else {
-    const jourD = new Date(dateDepart.value).toLocaleDateString("fr-FR", { weekday: "long" });
-    if (jourD === "dimanche") fillHours(heureDepart, horaires.dimanche_depart.map(h => [h, h]));
-    else fillHours(heureDepart, chunkArray(horaires[jourD], 2));
-  }
-}
+      // Arrivée
+      if (isClosed(dateArrivee.value)) {
+        heureArrivee.innerHTML = "";
+      } else if (isJourFerie(dateArrivee.value)) {
+        fillHours(heureArrivee, [["17:00","18:00"]]);
+      } else {
+        const jourA = new Date(dateArrivee.value).toLocaleDateString("fr-FR", { weekday: "long" });
+        if (jourA === "dimanche") fillHours(heureArrivee, chunkArray(horaires.dimanche_arrivee,2));
+        else fillHours(heureArrivee, chunkArray(horaires[jourA],2));
+      }
 
-// --- utilitaire pour transformer un tableau plat en tableau de paires [start,end] ---
-function chunkArray(arr, size) {
-  const result = [];
-  for (let i = 0; i < arr.length; i += size) {
-    result.push(arr.slice(i, i + size));
-  }
-  return result;
-}
+      // Départ
+      if (isClosed(dateDepart.value)) {
+        heureDepart.innerHTML = "";
+      } else if (isJourFerie(dateDepart.value)) {
+        fillHours(heureDepart, [["11:00","12:00"], ["17:00","18:00"]]);
+      } else {
+        const jourD = new Date(dateDepart.value).toLocaleDateString("fr-FR", { weekday: "long" });
+        if (jourD === "dimanche") fillHours(heureDepart, chunkArray(horaires.dimanche_depart,2));
+        else fillHours(heureDepart, chunkArray(horaires[jourD],2));
+      }
+    }
 
     dateArrivee.addEventListener("change", () => {
       checkClosed(dateArrivee);
@@ -251,7 +244,7 @@ function chunkArray(arr, size) {
 
     updateHoraires();
 
-    // --- Submit réservation ---
+    // Submit réservation
     formReservation.addEventListener("submit", async e => {
       e.preventDefault();
       const formData = new FormData(formReservation);
@@ -277,7 +270,6 @@ function chunkArray(arr, size) {
       }
 
       try {
-        // Insert dans Supabase
         const { error } = await supabaseClient.from("reservations").insert([reservation]);
         if (error) throw error;
 
