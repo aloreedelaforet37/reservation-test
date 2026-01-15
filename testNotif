@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Test Notifications Push</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- OneSignal SDK -->
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+
+  <!-- OneSignal Init (GitHub Pages sous-dossier) -->
+  <script>
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(function(OneSignal) {
+      OneSignal.init({
+        appId: "05bd945a-a699-4887-8598-f34e61dcd7c",
+
+        serviceWorkerPath: "reservation-test/OneSignalSDKWorker.js",
+        serviceWorkerUpdaterPath: "reservation-test/OneSignalSDKUpdaterWorker.js",
+        serviceWorkerParam: { scope: "/reservation-test/" },
+
+        notifyButton: { enable: true }
+      });
+    });
+  </script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f6f4;
+      text-align: center;
+      padding: 2rem;
+    }
+    button {
+      padding: 1rem 1.5rem;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>Test notifications push</h1>
+
+  <p>
+    Cliquez sur le bouton ci-dessous pour autoriser les notifications.
+  </p>
+
+  <!-- Bouton manuel -->
+  <button onclick="OneSignal.showSlidedownPrompt()">
+    Activer les notifications
+  </button>
+
+</body>
+</html>
