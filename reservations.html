@@ -16,6 +16,17 @@
     #logoutBtn { margin-top:1rem; padding:0.7rem 1rem; background:#9ec8a7; color:white; border:none; border-radius:8px; cursor:pointer; display:block; margin-left:auto; margin-right:auto; }
     #logoutBtn:hover { background:#5c8a63; }
   </style>
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+
+// Notifications Onesignal
+<script>
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.init({
+      appId: "05bd945a-a699-4887-8598-f34e61dcd7c7",
+    });
+  });
+</script>
 </head>
 <body>
   <h1>Liste des réservations</h1>
@@ -93,3 +104,4 @@
   </script>
 </body>
 </html>
+
