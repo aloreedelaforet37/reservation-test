@@ -19,11 +19,20 @@
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 
 // Notifications Onesignal
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>
   window.OneSignalDeferred = window.OneSignalDeferred || [];
-  OneSignalDeferred.push(async function(OneSignal) {
-    await OneSignal.init({
+  OneSignalDeferred.push(function(OneSignal) {
+    OneSignal.init({
       appId: "05bd945a-a699-4887-8598-f34e61dcd7c7",
+
+      serviceWorkerPath: "reservation-test/OneSignalSDKWorker.js",
+      serviceWorkerUpdaterPath: "reservation-test/OneSignalSDKUpdaterWorker.js",
+      serviceWorkerParam: { scope: "/reservation-test/" },
+
+      notifyButton: {
+        enable: true
+      }
     });
   });
 </script>
@@ -104,4 +113,5 @@
   </script>
 </body>
 </html>
+
 
