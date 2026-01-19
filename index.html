@@ -11,6 +11,29 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 
+<!-- OneSignal SDK -->
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+
+<script>
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(async function(OneSignal) {
+
+    await OneSignal.init({
+      appId: "05bd945a-a699-4887-8598-f34e61dcd7c",
+
+      // GitHub Pages (sous-dossier)
+      serviceWorkerPath: "/reservation-test/OneSignalSDKWorker.js",
+      serviceWorkerUpdaterPath: "/reservation-test/OneSignalSDKUpdaterWorker.js",
+      serviceWorkerParam: { scope: "/reservation-test/" },
+
+      notifyButton: { enable: false }
+    });
+
+    console.log("OneSignal prêt");
+  });
+</script>
+
+
 <style>
   /* --- Styles pour les champs des chiens --- */
   #nomsChiensContainer {
@@ -100,8 +123,34 @@
 </div>
 
 <script src="script.js"></script>
+
+<button id="enableNotifications" style="margin-top:20px;">
+  Activer les notifications
+</button>
+
+<p id="notifStatus"></p>
+<script>
+  document.getElementById("enableNotifications").addEventListener("click", async () => {
+    const status = document.getElementById("notifStatus");
+
+    try {
+      const permission = await OneSignal.Notifications.requestPermission();
+
+      if (permission) {
+        status.textContent = "✅ Notifications activées";
+      } else {
+        status.textContent = "❌ Notifications refusées";
+      }
+    } catch (err) {
+      console.error(err);
+      status.textContent = "Erreur lors de l’activation";
+    }
+  });
+</script>
+
 </body>
 </html>
+
 
 
 
