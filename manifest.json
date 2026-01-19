@@ -1,0 +1,20 @@
+{
+  "name": "Réservations – À l'Orée de la Forêt",
+  "short_name": "Réservations",
+  "start_url": "/reservation-test/",
+  "display": "standalone",
+  "background_color": "#f3f6f4",
+  "theme_color": "#2f855a",
+  "icons": [
+    {
+      "src": "logoCarre.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "logoCarre.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
