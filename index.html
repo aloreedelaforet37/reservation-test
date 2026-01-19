@@ -28,7 +28,7 @@
       serviceWorkerUpdaterPath: "/reservation-test/OneSignalSDKUpdaterWorker.js",
       serviceWorkerParam: { scope: "/reservation-test/" },
 
-      notifyButton: { enable: false }
+      notifyButton: { enable: true }
     });
 
     console.log("OneSignal prêt");
@@ -126,32 +126,9 @@
 
 <script src="script.js"></script>
 
-<button id="enableNotifications" style="margin-top:20px;">
-  Activer les notifications
-</button>
-
-<p id="notifStatus"></p>
-<script>
-  document.getElementById("enableNotifications").addEventListener("click", async () => {
-    const status = document.getElementById("notifStatus");
-
-    try {
-      const permission = await OneSignal.Notifications.requestPermission();
-
-      if (permission) {
-        status.textContent = "✅ Notifications activées";
-      } else {
-        status.textContent = "❌ Notifications refusées";
-      }
-    } catch (err) {
-      console.error(err);
-      status.textContent = "Erreur lors de l’activation";
-    }
-  });
-</script>
-
 </body>
 </html>
+
 
 
 
