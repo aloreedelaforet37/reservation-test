@@ -212,13 +212,13 @@ function isHeureEte(dateStr) {
   const date = new Date(dateStr);
   const year = date.getFullYear();
 
-  const mars = new Date(year, 2, 31);
+  const fevrier = new Date(year, 1, 28);
   const octobre = new Date(year, 9, 31);
 
-  const dernierDimancheMars = new Date(mars.setDate(31 - mars.getDay()));
+  const dernierDimancheFevrier = new Date(fevrier.setDate(28 - fevrier.getDay()));
   const dernierDimancheOctobre = new Date(octobre.setDate(31 - octobre.getDay()));
 
-  return date >= dernierDimancheMars && date < dernierDimancheOctobre;
+  return date >= dernierDimancheFevrier && date < dernierDimancheOctobre;
 }
     
     function fillHours(selectElem, plages) {
