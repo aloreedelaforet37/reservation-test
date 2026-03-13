@@ -207,6 +207,20 @@ window.addEventListener('DOMContentLoaded', () => {
       dimanche_depart: [["11:00","12:00"],["16:00","17:00"]]
     };
 
+function isHeureEte(dateStr) {
+
+  const date = new Date(dateStr);
+  const year = date.getFullYear();
+
+  const mars = new Date(year, 2, 31);
+  const octobre = new Date(year, 9, 31);
+
+  const dernierDimancheMars = new Date(mars.setDate(31 - mars.getDay()));
+  const dernierDimancheOctobre = new Date(octobre.setDate(31 - octobre.getDay()));
+
+  return date >= dernierDimancheMars && date < dernierDimancheOctobre;
+}
+    
     function fillHours(selectElem, plages) {
 
       const oldValue = selectElem.value;
@@ -252,11 +266,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
       const jour = new Date(dateArrivee.value).toLocaleDateString("fr-FR",{weekday:"long"});
 
-      if (jour === "dimanche")
+      if (jour === "dimanche") {
         fillHours(heureArrivee,[horaires.dimanche_arrivee]);
-      else
+      } else {
         const horaires = isHeureEte(dateArrivee.value) ? horairesEte : horairesHiver;
-          fillHours(heureArrivee, horaires[jour]);
+        fillHours(heureArrivee, horaires[jour]);
+      }
     }
 
     function updateHorairesDepart() {
@@ -273,11 +288,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
       const jour = new Date(dateDepart.value).toLocaleDateString("fr-FR",{weekday:"long"});
 
-      if (jour === "dimanche")
+      if (jour === "dimanche") {
         fillHours(heureDepart,[horaires.dimanche_depart]);
-      else
+      } else {
         const horaires = isHeureEte(dateDepart.value) ? horairesEte : horairesHiver;
         fillHours(heureDepart, horaires[jour]);
+      }
     }
 
     const todayStr = new Date().toISOString().split("T")[0];
