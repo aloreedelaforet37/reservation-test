@@ -357,6 +357,9 @@ function isHeureEte(dateStr) {
 
         showPopup("Votre réservation a été enregistrée !");
         formReservation.reset();
+        const todayStr = new Date().toISOString().split("T")[0];
+        dateArrivee.value = todayStr;
+        dateDepart.value = todayStr;
         updateNomChiens();
         updateHorairesArrivee();
         updateHorairesDepart();
