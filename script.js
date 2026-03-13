@@ -358,7 +358,8 @@ function isHeureEte(dateStr) {
         showPopup("Votre réservation a été enregistrée !");
         formReservation.reset();
         updateNomChiens();
-        updateHoraires();
+        updateHorairesArrivee();
+        updateHorairesDepart();
 
       } catch(err) {
         showPopup("Erreur en base : " + (err.message || err));
