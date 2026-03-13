@@ -24,7 +24,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // --- Périodes de fermeture ---
   const periodesFermees = [
-    { debut: "2026-04-18", fin: "2026-04-26" },
+    { debut: "2026-04-19", fin: "2026-04-26" },
     { debut: "2026-05-27", fin: "2026-05-31" },
     { debut: "2026-07-03", fin: "2026-07-23" },
     { debut: "2026-10-16", fin: "2026-10-24" },
