@@ -351,9 +351,28 @@ function isHeureEte(dateStr) {
         reservation.nom_chien = reservation.nom_chien.join(", ") + " et " + last;
       }
 
+      // Template Pour l'envoi de l'email de confirmation
+      const templateParams = {
+        to_email: reservation.email,
+        nomChiens: reservation.nom_chien,
+        date_arrivee: reservation.date_arrivee,
+        date_depart: reservation.date_depart
+      };
+      
       try {
         const { error } = await supabaseClient.from("reservations").insert([reservation]);
         if (error) throw error;
+
+        // Envoi email
+        await emailjs.send(
+          "service_22ypgkl","template_i2nke5k"
+          {
+            to_email: reservation.email,
+            nomChiens: reservation.nom_chien,
+            date_arrivee: reservation.date_arrivee,
+            date_depart: reservation.date_depart
+          }
+        );
 
         showPopup("Votre réservation a été enregistrée !");
         formReservation.reset();
