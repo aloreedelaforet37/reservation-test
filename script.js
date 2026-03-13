@@ -359,10 +359,14 @@ function isHeureEte(dateStr) {
         await emailjs.send(
           "service_22ypgkl","template_i2nke5k",
           {
-            to_email: reservation.email,
-            nomChiens: reservation.nom_chien,
-            date_arrivee: reservation.date_arrivee,
-            date_depart: reservation.date_depart
+              to_email: reservation.email,
+              from_name: "Isabelle - Pension À l'Orée de la Forêt",
+              from_email: "a.l.oree.de.la.foret.37@gmail.com",
+              subject: "Votre réservation a bien été enregistrée",
+              nom: reservation.nom_proprietaire,
+              nomChiens: reservation.nom_chien,
+              date_arrivee: `Du ${reservation.date_arrivee} à ${reservation.heure_arrivee.replace(":", "h")}`,
+              date_depart: `Au ${reservation.date_depart} à ${reservation.heure_depart.replace(":", "h")}`
           }
         );
 
