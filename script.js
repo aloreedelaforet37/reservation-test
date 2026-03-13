@@ -326,6 +326,45 @@ function isHeureEte(dateStr) {
       updateHorairesDepart();
     });
 
+      // --- Submit réservation ---
+    formReservation.addEventListener("submit", async e => {
+      e.preventDefault();
+      const formData = new FormData(formReservation);
+      const reservation = {
+        nom_proprietaire: formData.get("nom_proprietaire"),
+        email: formData.get("email"),
+        nb_chien: parseInt(formData.get("nb_chien")) || 1,
+        nom_chien: [],
+        date_arrivee: formData.get("date_arrivee"),
+        heure_arrivee: formData.get("heure_arrivee"),
+        date_depart: formData.get("date_depart"),
+        heure_depart: formData.get("heure_depart"),
+        remarque: formData.get("remarque")
+      };
+      for (let i = 1; i <= reservation.nb_chien; i++) reservation.nom_chien.push(formData.get(`nom_chien_input_${i}`));
+
+      // Format nom chien
+      if (reservation.nom_chien.length === 1) reservation.nom_chien = reservation.nom_chien[0];
+      else if (reservation.nom_chien.length === 2) reservation.nom_chien = reservation.nom_chien.join(" et ");
+      else {
+        const last = reservation.nom_chien.pop();
+        reservation.nom_chien = reservation.nom_chien.join(", ") + " et " + last;
+      }
+
+      try {
+        const { error } = await supabaseClient.from("reservations").insert([reservation]);
+        if (error) throw error;
+
+        showPopup("Votre réservation a été enregistrée !");
+        formReservation.reset();
+        updateNomChiens();
+        updateHoraires();
+
+      } catch(err) {
+        showPopup("Erreur en base : " + (err.message || err));
+      }
+    });
+    
   }
 
 });
