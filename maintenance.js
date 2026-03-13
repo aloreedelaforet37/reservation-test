@@ -1,4 +1,4 @@
-const MAINTENANCE = true;
+const MAINTENANCE = false;
 
 if (MAINTENANCE) {
   if (!window.location.pathname.includes("maintenance.html")) {
