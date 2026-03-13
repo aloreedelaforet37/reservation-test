@@ -256,7 +256,7 @@ function isHeureEte(dateStr) {
       const jour = new Date(dateArrivee.value).toLocaleDateString("fr-FR",{weekday:"long"});
       const horaires = isHeureEte(dateArrivee.value) ? horairesEte : horairesHiver;
       if (jour === "dimanche") {
-        fillHours(heureArrivee,[horaires.dimanche_arrivee]);
+        fillHours(heureArrivee,horaires.dimanche_arrivee);
       } else {
         fillHours(heureArrivee, horaires[jour]);
       }
@@ -277,7 +277,7 @@ function isHeureEte(dateStr) {
       const jour = new Date(dateDepart.value).toLocaleDateString("fr-FR",{weekday:"long"});
       const horaires = isHeureEte(dateDepart.value) ? horairesEte : horairesHiver;
       if (jour === "dimanche") {
-        fillHours(heureDepart,[horaires.dimanche_depart]);
+        fillHours(heureDepart,horaires.dimanche_depart);
       } else {
         fillHours(heureDepart, horaires[jour]);
       }
