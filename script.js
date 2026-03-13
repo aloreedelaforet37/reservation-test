@@ -174,17 +174,6 @@ window.addEventListener('DOMContentLoaded', () => {
     updateNomChiens();
     nbChienInput.addEventListener("change", updateNomChiens);
 
-    const horaires = {
-      lundi: ["09:00","14:00","17:00","18:45"],  // Heure d'hiver lundi: ["09:00","14:00","16:00","17:00"],
-      mardi: ["09:00","14:00","17:00","18:45"], // Heure d'hiver mardi: ["09:00","14:00","16:00","17:00"],
-      mercredi: ["09:00","14:00","17:00","18:45"],
-      jeudi: ["09:00","14:00","17:00","18:45"],
-      vendredi: ["09:00","14:00","17:00","18:45"],
-      samedi: ["10:00","12:00","17:00","18:00"],
-      dimanche_arrivee: ["17:00","18:00"],
-      dimanche_depart: ["11:00","12:00","17:00","18:00"]
-    };
-
     const horairesEte = {
       lundi: [["09:00","14:00"],["17:00","18:45"]],
       mardi: [["09:00","14:00"],["17:00","18:45"]],
@@ -199,12 +188,12 @@ window.addEventListener('DOMContentLoaded', () => {
     const horairesHiver = {
       lundi: [["09:00","14:00"],["16:00","17:00"]],
       mardi: [["09:00","14:00"],["16:00","17:00"]],
-      mercredi: [["09:00","14:00"],["16:00","17:00"]],
-      jeudi: [["09:00","14:00"],["16:00","17:00"]],
-      vendredi: [["09:00","14:00"],["16:00","17:00"]],
-      samedi: [["10:00","12:00"],["16:00","17:00"]],
-      dimanche_arrivee: [["16:00","17:00"]],
-      dimanche_depart: [["11:00","12:00"],["16:00","17:00"]]
+      mercredi: [["09:00","14:00"],["17:00","18:45"]],
+      jeudi: [["09:00","14:00"],["17:00","18:45"]],
+      vendredi: [["09:00","14:00"],["17:00","18:45"]],
+      samedi: [["10:00","12:00"],["17:00","18:00"]],
+      dimanche_arrivee: [["17:00","18:00"]],
+      dimanche_depart: [["11:00","12:00"],["17:00","18:00"]]
     };
 
 function isHeureEte(dateStr) {
@@ -265,11 +254,10 @@ function isHeureEte(dateStr) {
       }
 
       const jour = new Date(dateArrivee.value).toLocaleDateString("fr-FR",{weekday:"long"});
-
+      const horaires = isHeureEte(dateArrivee.value) ? horairesEte : horairesHiver;
       if (jour === "dimanche") {
         fillHours(heureArrivee,[horaires.dimanche_arrivee]);
       } else {
-        const horaires = isHeureEte(dateArrivee.value) ? horairesEte : horairesHiver;
         fillHours(heureArrivee, horaires[jour]);
       }
     }
@@ -287,11 +275,10 @@ function isHeureEte(dateStr) {
       }
 
       const jour = new Date(dateDepart.value).toLocaleDateString("fr-FR",{weekday:"long"});
-
+      const horaires = isHeureEte(dateDepart.value) ? horairesEte : horairesHiver;
       if (jour === "dimanche") {
         fillHours(heureDepart,[horaires.dimanche_depart]);
       } else {
-        const horaires = isHeureEte(dateDepart.value) ? horairesEte : horairesHiver;
         fillHours(heureDepart, horaires[jour]);
       }
     }
