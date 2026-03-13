@@ -96,6 +96,11 @@ window.addEventListener('DOMContentLoaded', () => {
   function formatLocalDate(d) {
     return d.toISOString().split("T")[0];
   }
+  // formate la date eu format "13 mars 2026"
+  function formatDateFR(dateStr) {
+    const options = { day: "numeric", month: "long", year: "numeric" };
+    return new Date(dateStr).toLocaleDateString("fr-FR", options);
+  }
 
   function getJoursFeries(year) {
 
@@ -365,8 +370,8 @@ function isHeureEte(dateStr) {
               subject: "Votre réservation a bien été enregistrée",
               nom: reservation.nom_proprietaire,
               nomChiens: reservation.nom_chien,
-              date_arrivee: `Du ${reservation.date_arrivee} à ${reservation.heure_arrivee.replace(":", "h")}`,
-              date_depart: `Au ${reservation.date_depart} à ${reservation.heure_depart.replace(":", "h")}`
+              date_arrivee: `Du ${formatDateFR(reservation.date_arrivee)} à ${reservation.heure_arrivee.replace(":", "h")}`,
+              date_depart: `Au ${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}`
           }
         );
 
