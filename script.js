@@ -185,6 +185,28 @@ window.addEventListener('DOMContentLoaded', () => {
       dimanche_depart: ["11:00","12:00","17:00","18:00"]
     };
 
+    const horairesEte = {
+      lundi: [["09:00","14:00"],["17:00","18:45"]],
+      mardi: [["09:00","14:00"],["17:00","18:45"]],
+      mercredi: [["09:00","14:00"],["17:00","18:45"]],
+      jeudi: [["09:00","14:00"],["17:00","18:45"]],
+      vendredi: [["09:00","14:00"],["17:00","18:45"]],
+      samedi: [["10:00","12:00"],["17:00","18:00"]],
+      dimanche_arrivee: [["17:00","18:00"]],
+      dimanche_depart: [["11:00","12:00"],["17:00","18:00"]]
+    };
+    
+    const horairesHiver = {
+      lundi: [["09:00","14:00"],["16:00","17:00"]],
+      mardi: [["09:00","14:00"],["16:00","17:00"]],
+      mercredi: [["09:00","14:00"],["16:00","17:00"]],
+      jeudi: [["09:00","14:00"],["16:00","17:00"]],
+      vendredi: [["09:00","14:00"],["16:00","17:00"]],
+      samedi: [["10:00","12:00"],["16:00","17:00"]],
+      dimanche_arrivee: [["16:00","17:00"]],
+      dimanche_depart: [["11:00","12:00"],["16:00","17:00"]]
+    };
+
     function fillHours(selectElem, plages) {
 
       const oldValue = selectElem.value;
@@ -233,7 +255,8 @@ window.addEventListener('DOMContentLoaded', () => {
       if (jour === "dimanche")
         fillHours(heureArrivee,[horaires.dimanche_arrivee]);
       else
-        fillHours(heureArrivee,[horaires[jour]]);
+        const horaires = isHeureEte(dateArrivee.value) ? horairesEte : horairesHiver;
+          fillHours(heureArrivee, horaires[jour]);
     }
 
     function updateHorairesDepart() {
@@ -253,7 +276,8 @@ window.addEventListener('DOMContentLoaded', () => {
       if (jour === "dimanche")
         fillHours(heureDepart,[horaires.dimanche_depart]);
       else
-        fillHours(heureDepart,[horaires[jour]]);
+        const horaires = isHeureEte(dateDepart.value) ? horairesEte : horairesHiver;
+        fillHours(heureDepart, horaires[jour]);
     }
 
     const todayStr = new Date().toISOString().split("T")[0];
