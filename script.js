@@ -1,15 +1,11 @@
-// script.js
 window.addEventListener('DOMContentLoaded', () => {
 
-  // --- Supabase ---
   const SUPABASE_URL = 'https://usatdvopaaxrxjiqhgju.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzYXRkdm9wYWF4cnhqaXFoZ2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MjUzNDUsImV4cCI6MjA3NTEwMTM0NX0.D52GPw5yZUJWN1oZD_sop7F7nU9WZLM5OMof1TI3IMc';
   const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // --- EmailJS ---
   if (typeof emailjs !== "undefined") emailjs.init("t6YY80T3DDql9uy32");
 
-  // --- Popup ---
   function showPopup(message) {
     const popup = document.createElement('div');
     popup.className = 'popup';
@@ -22,9 +18,7 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('closePopup').addEventListener('click', () => popup.remove());
   }
 
-  // --- Périodes de fermeture ---
   const periodesFermees = [
-    { debut: "2026-02-22", fin: "2026-02-28" },
     { debut: "2026-04-18", fin: "2026-04-26" },
     { debut: "2026-05-27", fin: "2026-05-31" },
     { debut: "2026-07-03", fin: "2026-07-23" },
@@ -32,19 +26,6 @@ window.addEventListener('DOMContentLoaded', () => {
     { debut: "2026-12-19", fin: "2026-12-27" }
   ];
 
-  const encartFermeture = document.getElementById("encartFermeture");
-  if (encartFermeture) {
-    let contenu = `<strong>Pour information, la pension sera fermée aux périodes suivantes :</strong><br>`;
-    periodesFermees.forEach(p => {
-      const options = { day: "numeric", month: "long", year: "numeric" };
-      let debut = new Date(p.debut).toLocaleDateString("fr-FR", options).replace(/^1 /,"1er ");
-      let fin = new Date(p.fin).toLocaleDateString("fr-FR", options).replace(/^1 /,"1er ");
-      contenu += `Du ${debut} au ${fin}<br>`;
-    });
-    encartFermeture.innerHTML = contenu;
-  }
-
-  // --- Fonctions fermeture ---
   function isClosed(dateStr) {
     const date = new Date(dateStr);
     return periodesFermees.some(p => {
@@ -66,12 +47,11 @@ window.addEventListener('DOMContentLoaded', () => {
 
   function checkClosed(dateInput) {
     if (isClosed(dateInput.value)) {
-      alert("La pension est fermée à cette date. Merci d'en choisir une autre.");
+      alert("La pension est fermée à cette date.");
       dateInput.value = "";
     }
   }
 
-  // --- Jours fériés calcul automatique ---
   function getEasterDate(year) {
     const a = year % 19;
     const b = Math.floor(year / 100);
@@ -91,30 +71,32 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   function formatLocalDate(d) {
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const dd = String(d.getDate()).padStart(2, "0");
-    return `${yyyy}-${mm}-${dd}`;
+    return d.toISOString().split("T")[0];
   }
 
   function getJoursFeries(year) {
-    const jours = [];
 
-    // Jours fixes
-    jours.push(`${year}-01-01`); // Nouvel An
-    jours.push(`${year}-05-01`); // Fête du Travail
-    jours.push(`${year}-05-08`); // Victoire 1945
-    jours.push(`${year}-07-14`); // Fête nationale
-    jours.push(`${year}-08-15`); // Assomption
-    jours.push(`${year}-11-01`); // Toussaint
-    jours.push(`${year}-11-11`); // Armistice
-    jours.push(`${year}-12-25`); // Noël
+    const jours = [
+      `${year}-01-01`,
+      `${year}-05-01`,
+      `${year}-05-08`,
+      `${year}-07-14`,
+      `${year}-08-15`,
+      `${year}-11-01`,
+      `${year}-11-11`,
+      `${year}-12-25`
+    ];
 
-    // Jours mobiles
     const paques = getEasterDate(year);
-    const lundiPaques = new Date(paques); lundiPaques.setDate(paques.getDate() + 1);
-    const ascension = new Date(paques); ascension.setDate(paques.getDate() + 39);
-    const pentecote = new Date(paques); pentecote.setDate(paques.getDate() + 50);
+
+    const lundiPaques = new Date(paques);
+    lundiPaques.setDate(paques.getDate() + 1);
+
+    const ascension = new Date(paques);
+    ascension.setDate(paques.getDate() + 39);
+
+    const pentecote = new Date(paques);
+    pentecote.setDate(paques.getDate() + 50);
 
     jours.push(formatLocalDate(lundiPaques));
     jours.push(formatLocalDate(ascension));
@@ -125,171 +107,143 @@ window.addEventListener('DOMContentLoaded', () => {
 
   function isJourFerie(dateStr) {
     const year = new Date(dateStr).getFullYear();
-    const joursFeries = getJoursFeries(year);
-    return joursFeries.includes(dateStr);
+    return getJoursFeries(year).includes(dateStr);
   }
 
-  // --- Formulaire Réservation ---
   const formReservation = document.getElementById("reservationForm");
-  const nomsChiensContainer = document.getElementById("nomsChiensContainer");
+  if (!formReservation) return;
 
-  if (formReservation) {
-    const dateArrivee = document.getElementById("dateArrivee");
-    const dateDepart = document.getElementById("dateDepart");
-    const heureArrivee = document.getElementById("heureArrivee");
-    const heureDepart = document.getElementById("heureDepart");
-    const nbChienInput = formReservation.querySelector('input[name="nb_chien"]');
+  const dateArrivee = document.getElementById("dateArrivee");
+  const dateDepart = document.getElementById("dateDepart");
+  const heureArrivee = document.getElementById("heureArrivee");
+  const heureDepart = document.getElementById("heureDepart");
 
-    const horaires = {
-      lundi: ["09:00","14:00","16:00","17:00"],
-      mardi: ["09:00","14:00","16:00","17:00"],
-      mercredi: ["09:00","14:00","17:00","18:45"],
-      jeudi: ["09:00","14:00","17:00","18:45"],
-      vendredi: ["09:00","14:00","17:00","18:45"],
-      samedi: ["10:00","12:00","17:00","18:00"],
-      dimanche_arrivee: ["17:00","18:00"],
-      dimanche_depart: ["11:00","12:00","17:00","18:00"]
-    };
+  const horaires = {
+    lundi: ["09:00","14:00","16:00","17:00"],
+    mardi: ["09:00","14:00","16:00","17:00"],
+    mercredi: ["09:00","14:00","17:00","18:45"],
+    jeudi: ["09:00","14:00","17:00","18:45"],
+    vendredi: ["09:00","14:00","17:00","18:45"],
+    samedi: ["10:00","12:00","17:00","18:00"],
+    dimanche_arrivee: ["17:00","18:00"],
+    dimanche_depart: ["11:00","12:00","17:00","18:00"]
+  };
 
-    function updateNomChiens() {
-      const nb = parseInt(nbChienInput.value) || 1;
-      nomsChiensContainer.innerHTML = "";
-      for (let i = 1; i <= nb; i++) {
-        const div = document.createElement("div");
-        div.className = "chien-field";
-        const label = document.createElement("label");
-        label.textContent = nb === 1 ? "Nom du chien" : `Nom chien ${i}`;
-        const input = document.createElement("input");
-        input.type = "text";
-        input.name = `nom_chien_input_${i}`;
-        input.required = true;
-        div.appendChild(label);
-        div.appendChild(input);
-        nomsChiensContainer.appendChild(div);
-      }
-    }
-    updateNomChiens();
-    nbChienInput.addEventListener("change", updateNomChiens);
+  function fillHours(selectElem, liste) {
 
-    const todayStr = new Date().toISOString().split("T")[0];
-    dateArrivee.value = todayStr;
-    dateDepart.value = todayStr;
-    dateArrivee.min = todayStr;
-    dateDepart.min = todayStr;
+    const oldValue = selectElem.value;
 
-    function fillHours(selectElem, liste) {
-      selectElem.innerHTML = "";
-      for (let i = 0; i < liste.length; i++) {
-        let [start, end] = liste[i];
-        let hour = start;
-        while (hour <= end) {
-          const opt = document.createElement("option");
-          opt.value = hour;
-          opt.textContent = hour.replace(":", "h");
-          selectElem.appendChild(opt);
-          let [h,m] = hour.split(":").map(Number);
-          m += 15;
-          if (m >= 60) { h++; m = 0; }
-          hour = `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
-        }
-      }
-    }
+    selectElem.innerHTML = "";
 
-    function chunkArray(arr, size) {
-      const result = [];
-      for (let i = 0; i < arr.length; i += size) {
-        result.push(arr.slice(i, i + size));
-      }
-      return result;
-    }
+    liste.forEach(([start,end]) => {
 
-    function updateHoraires() {
-      if (!dateArrivee.value || !dateDepart.value) return;
+      let hour = start;
 
-      // --- Arrivée ---
-      if (isClosed(dateArrivee.value)) {
-        heureArrivee.innerHTML = "";
-      } else if (isJourFerie(dateArrivee.value)) {
-        fillHours(heureArrivee, [["17:00","18:00"]]);
-      } else {
-        const jourA = new Date(dateArrivee.value).toLocaleDateString("fr-FR", { weekday: "long" });
-        if (jourA === "dimanche") fillHours(heureArrivee, chunkArray(horaires.dimanche_arrivee,2));
-        else fillHours(heureArrivee, chunkArray(horaires[jourA],2));
-      }
+      while (hour <= end) {
 
-      // --- Départ ---
-      if (isClosed(dateDepart.value)) {
-        heureDepart.innerHTML = "";
-      } else if (isJourFerie(dateDepart.value)) {
-        fillHours(heureDepart, [["11:00","12:00"], ["17:00","18:00"]]);
-      } else {
-        const jourD = new Date(dateDepart.value).toLocaleDateString("fr-FR", { weekday: "long" });
-        if (jourD === "dimanche") fillHours(heureDepart, chunkArray(horaires.dimanche_depart,2));
-        else fillHours(heureDepart, chunkArray(horaires[jourD],2));
-      }
-    }
+        const opt = document.createElement("option");
+        opt.value = hour;
+        opt.textContent = hour.replace(":", "h");
+        selectElem.appendChild(opt);
 
-    dateArrivee.addEventListener("change", () => {
-      checkClosed(dateArrivee);
-      dateDepart.min = dateArrivee.value;
-      if (dateDepart.value < dateArrivee.value) dateDepart.value = dateArrivee.value;
-      if (crossesClosure(dateArrivee.value,dateDepart.value)) { 
-        alert("Votre séjour ne peut pas traverser une période de fermeture."); 
-        dateArrivee.value = ""; 
-      }
-      updateHoraires();
-    });
+        let [h,m] = hour.split(":").map(Number);
+        m += 15;
+        if (m >= 60) { h++; m = 0; }
 
-    dateDepart.addEventListener("change", () => {
-      checkClosed(dateDepart);
-      if (dateDepart.value < dateArrivee.value) dateDepart.value = dateArrivee.value;
-      if (crossesClosure(dateArrivee.value,dateDepart.value)) { 
-        alert("Votre séjour ne peut pas traverser une période de fermeture."); 
-        dateDepart.value = ""; 
-      }
-      updateHoraires();
-    });
-
-    updateHoraires();
-
-    // --- Submit réservation ---
-    formReservation.addEventListener("submit", async e => {
-      e.preventDefault();
-      const formData = new FormData(formReservation);
-      const reservation = {
-        nom_proprietaire: formData.get("nom_proprietaire"),
-        email: formData.get("email"),
-        nb_chien: parseInt(formData.get("nb_chien")) || 1,
-        nom_chien: [],
-        date_arrivee: formData.get("date_arrivee"),
-        heure_arrivee: formData.get("heure_arrivee"),
-        date_depart: formData.get("date_depart"),
-        heure_depart: formData.get("heure_depart"),
-        remarque: formData.get("remarque")
-      };
-      for (let i = 1; i <= reservation.nb_chien; i++) reservation.nom_chien.push(formData.get(`nom_chien_input_${i}`));
-
-      // Format nom chien
-      if (reservation.nom_chien.length === 1) reservation.nom_chien = reservation.nom_chien[0];
-      else if (reservation.nom_chien.length === 2) reservation.nom_chien = reservation.nom_chien.join(" et ");
-      else {
-        const last = reservation.nom_chien.pop();
-        reservation.nom_chien = reservation.nom_chien.join(", ") + " et " + last;
-      }
-
-      try {
-        const { error } = await supabaseClient.from("reservations").insert([reservation]);
-        if (error) throw error;
-
-        showPopup("Votre réservation a été enregistrée !");
-        formReservation.reset();
-        updateNomChiens();
-        updateHoraires();
-
-      } catch(err) {
-        showPopup("Erreur en base : " + (err.message || err));
+        hour = `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
       }
     });
+
+    if ([...selectElem.options].some(o => o.value === oldValue)) {
+      selectElem.value = oldValue;
+    }
   }
+
+  function updateHorairesArrivee() {
+
+    if (!dateArrivee.value) return;
+
+    if (isClosed(dateArrivee.value)) {
+      heureArrivee.innerHTML="";
+      return;
+    }
+
+    if (isJourFerie(dateArrivee.value)) {
+      fillHours(heureArrivee,[["17:00","18:00"]]);
+      return;
+    }
+
+    const jour = new Date(dateArrivee.value).toLocaleDateString("fr-FR",{weekday:"long"});
+
+    if (jour==="dimanche")
+      fillHours(heureArrivee,[horaires.dimanche_arrivee]);
+    else
+      fillHours(heureArrivee,[horaires[jour]]);
+  }
+
+  function updateHorairesDepart() {
+
+    if (!dateDepart.value) return;
+
+    if (isClosed(dateDepart.value)) {
+      heureDepart.innerHTML="";
+      return;
+    }
+
+    if (isJourFerie(dateDepart.value)) {
+      fillHours(heureDepart,[["11:00","12:00"],["17:00","18:00"]]);
+      return;
+    }
+
+    const jour = new Date(dateDepart.value).toLocaleDateString("fr-FR",{weekday:"long"});
+
+    if (jour==="dimanche")
+      fillHours(heureDepart,[horaires.dimanche_depart]);
+    else
+      fillHours(heureDepart,[horaires[jour]]);
+  }
+
+  const today = new Date().toISOString().split("T")[0];
+
+  dateArrivee.value = today;
+  dateDepart.value = today;
+
+  dateArrivee.min = today;
+  dateDepart.min = today;
+
+  updateHorairesArrivee();
+  updateHorairesDepart();
+
+  dateArrivee.addEventListener("change", () => {
+
+    checkClosed(dateArrivee);
+
+    dateDepart.min = dateArrivee.value;
+
+    if (dateDepart.value < dateArrivee.value)
+      dateDepart.value = dateArrivee.value;
+
+    if (crossesClosure(dateArrivee.value,dateDepart.value)) {
+      alert("Votre séjour ne peut pas traverser une période de fermeture.");
+      dateArrivee.value = "";
+    }
+
+    updateHorairesArrivee();
+  });
+
+  dateDepart.addEventListener("change", () => {
+
+    checkClosed(dateDepart);
+
+    if (dateDepart.value < dateArrivee.value)
+      dateDepart.value = dateArrivee.value;
+
+    if (crossesClosure(dateArrivee.value,dateDepart.value)) {
+      alert("Votre séjour ne peut pas traverser une période de fermeture.");
+      dateDepart.value = "";
+    }
+
+    updateHorairesDepart();
+  });
 
 });
