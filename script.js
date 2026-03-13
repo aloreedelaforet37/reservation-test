@@ -308,6 +308,7 @@ function isHeureEte(dateStr) {
       }
 
       updateHorairesArrivee();
+      updateHorairesDepart();
     });
 
     dateDepart.addEventListener("change", () => {
