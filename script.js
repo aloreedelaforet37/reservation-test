@@ -360,20 +360,35 @@ function isHeureEte(dateStr) {
         const { error } = await supabaseClient.from("reservations").insert([reservation]);
         if (error) throw error;
 
-        // Envoi email
-        await emailjs.send(
+        // Envoi email au client et à moi
+        await Promise.all([
+          // Envoi au client
+          emailjs.send(
           "service_22ypgkl","template_i2nke5k",
-          {
-              to_email: reservation.email,
-              from_name: "Isabelle - Pension À l'Orée de la Forêt",
-              from_email: "a.l.oree.de.la.foret.37@gmail.com",
-              subject: "Votre réservation pour " + reservation.nom_chien +" a bien été enregistrée",
-              nom: reservation.nom_proprietaire,
-              nomChiens: reservation.nom_chien,
-              date_arrivee: `Du ${formatDateFR(reservation.date_arrivee)} à ${reservation.heure_arrivee.replace(":", "h")}`,
-              date_depart: `Au ${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}`
-          }
-        );
+            {
+                to_email: reservation.email,
+                from_name: "Isabelle - Pension À l'Orée de la Forêt",
+                from_email: "a.l.oree.de.la.foret.37@gmail.com",
+                subject: "Votre réservation pour " + reservation.nom_chien +" a bien été enregistrée",
+                nomChiens: reservation.nom_chien,
+                date_arrivee: `Du ${formatDateFR(reservation.date_arrivee)} à ${reservation.heure_arrivee.replace(":", "h")}`,
+                date_depart: `Au ${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}`
+            }
+          ),
+          // Envoi à moi
+          emailjs.send(
+            "service_22ypgkl","template_i2nke5k",
+            {
+                to_email: "a.l.oree.de.la.foret.37@gmail.com",
+                from_name: reservation.nom_proprietaire,
+                from_email: a.l.oree.de.la.foret.37@gmail.com,
+                subject: "Nouvelle réservation pour " + reservation.nom_chien,
+                nomChiens: reservation.nom_chien,
+                date_arrivee: `Du ${formatDateFR(reservation.date_arrivee)} à ${reservation.heure_arrivee.replace(":", "h")}`,
+                date_depart: `Au ${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}`
+            }
+          )
+        ]);
 
         showPopup("Votre réservation a été enregistrée !");
         formReservation.reset();
