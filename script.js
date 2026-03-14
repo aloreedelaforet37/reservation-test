@@ -367,7 +367,7 @@ function isHeureEte(dateStr) {
               to_email: reservation.email,
               from_name: "Isabelle - Pension À l'Orée de la Forêt",
               from_email: "a.l.oree.de.la.foret.37@gmail.com",
-              subject: "Votre réservation a bien été enregistrée",
+              subject: "Votre réservation pour " + reservation.nom_chien +" a bien été enregistrée,
               nom: reservation.nom_proprietaire,
               nomChiens: reservation.nom_chien,
               date_arrivee: `Du ${formatDateFR(reservation.date_arrivee)} à ${reservation.heure_arrivee.replace(":", "h")}`,
