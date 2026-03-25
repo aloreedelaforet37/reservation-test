@@ -31,6 +31,11 @@ window.addEventListener('DOMContentLoaded', () => {
     { debut: "2026-12-19", fin: "2026-12-27" }
   ];
 
+  const datesCompletes = [
+    { debut: "2026-04-12", fin: "2026-04-18" },
+    { debut: "2026-05-08", fin: "2026-05-10" }
+  ];
+
   const encartFermeture = document.getElementById("encartFermeture");
 
   if (encartFermeture) {
@@ -57,6 +62,15 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  function isComplet(dateStr) {
+    const date = new Date(dateStr);
+    return datesCompletes.some(p => {
+      const d1 = new Date(p.debut);
+      const d2 = new Date(p.fin);
+      return date >= d1 && date <= d2;
+    });
+}
+/*
   function crossesClosure(dateA, dateD) {
     const dA = new Date(dateA);
     const dD = new Date(dateD);
@@ -66,10 +80,39 @@ window.addEventListener('DOMContentLoaded', () => {
       return dA < f1 && dD > f2;
     });
   }
+*/
+
+  function crossesClosure(dateA, dateD) {
+  const dA = new Date(dateA);
+  const dD = new Date(dateD);
+
+  // Vérif périodes de fermeture
+  const traversePeriode = periodesFermees.some(p => {
+    const f1 = new Date(p.debut);
+    const f2 = new Date(p.fin);
+    return dA < f1 && dD > f2;
+  });
+
+  // Vérif dates individuelles bloquées comprises dans le séjour
+  const contientDateBloquee = datesBloqueesIndividuelles.some(dateStr => {
+    const d = new Date(dateStr);
+    return d > dA && d < dD;
+  });
+
+  // Vérif périodes complètes
+  const contientDateComplete = datesCompletes.some(p => {
+    const d1 = new Date(p.debut);
+    const d2 = new Date(p.fin);
+    return dA <= d2 && dD >= d1;
+  });
+
+  return traversePeriode || contientDateBloquee || contientDateComplete;
+}
+  
 
   function checkClosed(dateInput) {
     if (isClosed(dateInput.value)) {
-      alert("La pension est fermée à cette date. Merci d'en choisir une autre.");
+      alert("Nous vous informons que la pension est fermée aux dates que vous avez sélectionnées. N’hésitez pas à choisir une autre période pour votre réservation");
       dateInput.value = "";
     }
   }
