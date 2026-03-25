@@ -114,7 +114,10 @@ window.addEventListener('DOMContentLoaded', () => {
     if (isClosed(dateInput.value)) {
       alert("Nous vous informons que la pension est fermée aux dates que vous avez sélectionnées. N’hésitez pas à choisir une autre période pour votre réservation");
       dateInput.value = "";
-    }
+    }else if (isComplet(dateInput.value)) {
+    alert("Nous vous informons que la pension est complète aux dates que vous avez sélectionnées. N'hésitez pas à me contacter ou réserver sur une autre période");
+    dateInput.value = "";
+  }
   }
 
   // --- Jours fériés ---
