@@ -111,15 +111,15 @@ window.addEventListener('DOMContentLoaded', () => {
 }
   
 
-  function checkClosed(dateInput) {
-    if (isClosed(dateInput.value)) {
-      showPopup("Nous vous informons que la pension est fermée aux dates que vous avez sélectionnées. N’hésitez pas à choisir une autre période pour votre réservation");
-      dateInput.value = "";
-    }else if (isComplet(dateInput.value)) {
-    showPopup("Nous vous informons que la pension est complète aux dates que vous avez sélectionnées. N'hésitez pas à me contacter ou réserver sur une autre période");
-    dateInput.value = "";
+function checkClosed(dateInput, type) {
+  if (isClosed(dateInput.value)) {
+    showPopup("La pension est fermée à cette date. Merci d'en choisir une autre.");
+    dateInput.value = type === "arrivee" ? todayStr : dateArrivee.value;
+  } else if (isComplet(dateInput.value)) {
+    showPopup("La pension est complète à cette date. Merci d'en choisir une autre.");
+    dateInput.value = type === "arrivee" ? todayStr : dateArrivee.value;
   }
-  }
+}
 
   // --- Jours fériés ---
   function getEasterDate(year) {
@@ -347,7 +347,7 @@ function isHeureEte(dateStr) {
 
     dateArrivee.addEventListener("change", () => {
 
-      checkClosed(dateArrivee);
+      checkClosed(dateArrivee, arrivee);
 
       dateDepart.min = dateArrivee.value;
 
@@ -365,7 +365,7 @@ function isHeureEte(dateStr) {
 
     dateDepart.addEventListener("change", () => {
 
-      checkClosed(dateDepart);
+      checkClosed(dateDepart, depart);
 
       if (dateDepart.value < dateArrivee.value)
         dateDepart.value = dateArrivee.value;
