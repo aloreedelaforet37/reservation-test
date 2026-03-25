@@ -96,12 +96,6 @@ window.addEventListener('DOMContentLoaded', () => {
     return dA < f1 && dD > f2;
   });
 
-  // Vérif dates individuelles bloquées comprises dans le séjour
-  const contientDateBloquee = datesBloqueesIndividuelles.some(dateStr => {
-    const d = new Date(dateStr);
-    return d > dA && d < dD;
-  });
-
   // Vérif périodes complètes
   const contientDateComplete = datesCompletes.some(p => {
     const d1 = new Date(p.debut);
@@ -109,7 +103,7 @@ window.addEventListener('DOMContentLoaded', () => {
     return dA <= d2 && dD >= d1;
   });
 
-  return traversePeriode || contientDateBloquee || contientDateComplete;
+  return traversePeriode || contientDateComplete;
 }
   
 
@@ -347,7 +341,7 @@ function isHeureEte(dateStr) {
 
     dateArrivee.addEventListener("change", () => {
 
-      checkClosed(dateArrivee, arrivee);
+      checkClosed(dateArrivee, "arrivee");
 
       dateDepart.min = dateArrivee.value;
 
@@ -365,7 +359,7 @@ function isHeureEte(dateStr) {
 
     dateDepart.addEventListener("change", () => {
 
-      checkClosed(dateDepart, depart);
+      checkClosed(dateDepart, "depart");
 
       if (dateDepart.value < dateArrivee.value)
         dateDepart.value = dateArrivee.value;
