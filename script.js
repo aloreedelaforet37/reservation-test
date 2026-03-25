@@ -9,6 +9,8 @@ window.addEventListener('DOMContentLoaded', () => {
   // --- EmailJS ---
   if (typeof emailjs !== "undefined") emailjs.init("t6YY80T3DDql9uy32");
 
+  const todayStr = new Date().toISOString().split("T")[0];
+
   // --- Popup ---
   function showPopup(message) {
     const popup = document.createElement('div');
@@ -335,8 +337,6 @@ function isHeureEte(dateStr) {
       }
     }
 
-    const todayStr = new Date().toISOString().split("T")[0];
-
     dateArrivee.value = todayStr;
     dateDepart.value = todayStr;
     dateArrivee.min = todayStr;
@@ -440,7 +440,7 @@ function isHeureEte(dateStr) {
 
         showPopup("Votre réservation a été enregistrée !");
         formReservation.reset();
-        const todayStr = new Date().toISOString().split("T")[0];
+
         dateArrivee.value = todayStr;
         dateDepart.value = todayStr;
         updateNomChiens();
