@@ -19,10 +19,10 @@ window.addEventListener('DOMContentLoaded', () => {
       <div class="popup-content">
         <strong>Information</strong><br><br>
         ${message}
-        <button id="closePopup">OK</button>
+        <button class="closePopup">OK</button>
       </div>`;
     document.body.appendChild(popup);
-    document.getElementById('closePopup').addEventListener('click', () => popup.remove());
+    popup.querySelector('.closePopup').addEventListener('click', () => popup.remove());
   }
 
   // --- Périodes de fermeture ---
