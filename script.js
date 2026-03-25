@@ -354,7 +354,7 @@ function isHeureEte(dateStr) {
         dateDepart.value = dateArrivee.value;
 
       if (crossesClosure(dateArrivee.value,dateDepart.value)) {
-        alert("Votre séjour ne peut pas traverser une période de fermeture.");
+        alert("Votre séjour ne peut pas traverser une période de fermeture ou de période complète.");
         dateArrivee.value = "";
       }
 
