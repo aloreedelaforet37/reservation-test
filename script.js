@@ -482,6 +482,7 @@ dateDepart.addEventListener("change", () => {
           `📧 Email : ${reservation.email}\n` +
           `📅 Arrivée : ${formatDateFR(reservation.date_arrivee)} à ${reservation.heure_arrivee.replace(":", "h")}\n` +
           `📅 Départ : ${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}`
+          `📝 Remarque : ${reservation.remarque}`
         );
 
         await fetch(`https://api.callmebot.com/whatsapp.php?phone=33627363788&text=${texte}&apikey=3971225`);
