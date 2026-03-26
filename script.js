@@ -330,13 +330,18 @@ dateArrivee.addEventListener("change", () => {
 
 dateDepart.addEventListener("change", () => {
   dateDepart.style.color = "";
+  heureDepart.style.color = "";
   if (dateDepart.value < dateArrivee.value)
     dateDepart.value = dateArrivee.value;
   updateHorairesDepart();
 });
+    
+heureDepart.addEventListener("change", () => {
+  heureDepart.style.color = "";
+});
 
   
-      // --- Submit réservation ---
+// --- Submit réservation ---
 formReservation.addEventListener("submit", async e => {
   e.preventDefault();
 
