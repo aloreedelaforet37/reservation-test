@@ -99,23 +99,18 @@ function crossesClosure(dateA, dateD) {
 }
 
   // --- Jours fériés ---
-  function getEasterDate(year) {
-    const a = year % 19;
-    const b = Math.floor(year / 100);
-    const c = year % 100;
-    const d = Math.floor(b / 4);
-    const e = b % 4;
-    const f = Math.floor((b + 8) / 25);
-    const g = Math.floor((b - f + 1) / 3);
-    const h = (19*a + b - d - g + 15) % 30;
-    const i = Math.floor(c / 4);
-    const k = c % 4;
-    const l = (32 + 2*e + 2*i - h - k) % 7;
-    const m = Math.floor((a + 11*h + 22*l) / 451);
-    const month = Math.floor((h + l - 7*m + 114) / 31);
-    const day = ((h + l - 7*m + 114) % 31) + 1;
-    return new Date(year, month - 1, day);
-  }
+function getEasterDate(year) {
+  const f = Math.floor,
+    G = year % 19,
+    C = f(year / 100),
+    H = (C - f(C / 4) - f((8 * C + 13) / 25) + 19 * G + 15) % 30,
+    I = H - f(H / 28) * (1 - f(29 / (H + 1)) * f((21 - G) / 11)),
+    J = (year + f(year / 4) + I + 2 - C + f(C / 4)) % 7,
+    L = I - J,
+    month = 3 + f((L + 40) / 44),
+    day = L + 28 - 31 * f(month / 4);
+  return new Date(year, month - 1, day);
+}
 
   function formatLocalDate(d) {
     return d.toISOString().split("T")[0];
