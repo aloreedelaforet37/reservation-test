@@ -486,4 +486,6 @@ formReservation.addEventListener("submit", async e => {
       || JSON.stringify(err);
     showPopup("Erreur : " + message);
   }
-});
+});   // fin du addEventListener submit
+}     // fin du if (formReservation)
+});  // fin du DOMContentLoaded
