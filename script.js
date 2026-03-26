@@ -399,6 +399,16 @@ formReservation.addEventListener("submit", async e => {
     erreur = true;
   }
 
+  if (!erreur && dateArrivee.value === dateDepart.value) {
+    if (heureDepart.value <= heureArrivee.value) {
+      showPopup("L'heure de départ doit être postérieure à l'heure d'arrivée.");
+      dateDepart.style.color = "red";
+      heureDepart.style.color = "red";
+      heureDepart.focus();
+      erreur = true;
+    }
+  }
+
   if (erreur) return;
 
   const formData = new FormData(formReservation);
