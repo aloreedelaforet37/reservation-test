@@ -485,6 +485,18 @@ dateDepart.addEventListener("change", () => {
           )
         ]);
 
+        // Envoi whatsapp à moi
+
+        const texte = encodeURIComponent(
+          `🐶 Nouvelle réservation pour ${reservation.nom_chien}\n` +
+          `👤 Propriétaire : ${reservation.nom_proprietaire}\n` +
+          `📧 Email : ${reservation.email}\n` +
+          `📅 Arrivée : ${formatDateFR(reservation.date_arrivee)} à ${reservation.heure_arrivee.replace(":", "h")}\n` +
+          `📅 Départ : ${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}`
+        );
+
+        await fetch(`https://api.callmebot.com/whatsapp.php?phone=33627363788&text=${texte}&apikey=3971225`);
+
         showPopup(`Votre réservation a bien été enregistrée.<br><br>
           Arrivée : <strong>${formatDateFR(reservation.date_arrivee)} à ${reservation.heure_arrivee.replace(":", "h")}</strong><br>
           Départ : <strong>${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}</strong>`);
