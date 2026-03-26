@@ -384,19 +384,20 @@ dateDepart.addEventListener("change", () => {
         dateArrivee.focus();
         erreur = true;
       }
-    
-      if (isClosed(dateDepart.value)) {
-        showPopup("La date de départ est sur une période de fermeture, n'hésitez pas à réserver sur une autre période.");
-        dateDepart.style.color = "red";
-        if (!erreur) dateDepart.focus();
-        erreur = true;
-      } else if (isComplet(dateDepart.value)) {
-        showPopup("Nous sommes complets le jour de la date de départ, n'hésitez pas à réserver sur une autre période ou à me contacter.");
-        dateDepart.style.color = "red";
-        if (!erreur) dateDepart.focus();
-        erreur = true;
+      if (!erreur) {
+        if (isClosed(dateDepart.value)) {
+          showPopup("La date de départ est sur une période de fermeture, n'hésitez pas à réserver sur une autre période.");
+          dateDepart.style.color = "red";
+          if (!erreur) dateDepart.focus();
+          erreur = true;
+        } else if (isComplet(dateDepart.value)) {
+          showPopup("Nous sommes complets le jour de la date de départ, n'hésitez pas à réserver sur une autre période ou à me contacter.");
+          dateDepart.style.color = "red";
+          if (!erreur) dateDepart.focus();
+          erreur = true;
+        }
       }
-    
+      
       if (!erreur && crossesClosure(dateArrivee.value, dateDepart.value)) {
         showPopup("Votre séjour ne peut pas traverser une période de fermeture ou de période complète.");
         dateArrivee.style.color = "red";
