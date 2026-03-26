@@ -342,41 +342,6 @@ function isHeureEte(dateStr) {
 
     updateHorairesArrivee();
     updateHorairesDepart();
-/*
-dateArrivee.addEventListener("change", () => {
-
-  dateArrivee.style.color = "";
-  const blocked = checkClosed(dateArrivee, "arrivee");
-
-  dateDepart.min = dateArrivee.value;
-  if (!dateDepart.value || dateDepart.value < dateArrivee.value)
-    dateDepart.value = dateArrivee.value;
-
-  if (!blocked && crossesClosure(dateArrivee.value, dateDepart.value)) {
-    showPopup("Votre séjour ne peut pas traverser une période de fermeture ou de période complète.");
-    dateArrivee.style.color = "red";
-  }
-
-  updateHorairesArrivee();
-  updateHorairesDepart();
-});
-
-dateDepart.addEventListener("change", () => {
-
-  dateDepart.style.color = "";
-  const blocked = checkClosed(dateDepart, "depart");
-
-  if (dateDepart.value < dateArrivee.value)
-    dateDepart.value = dateArrivee.value;
-
-  if (!blocked && crossesClosure(dateArrivee.value, dateDepart.value)) {
-    showPopup("Votre séjour ne peut pas traverser une période de fermeture ou de période complète.");
-    dateDepart.style.color = "red";
-  }
-
-  updateHorairesDepart();
-});
-    */
 
 dateArrivee.addEventListener("change", () => {
   dateArrivee.style.color = "";
@@ -411,7 +376,7 @@ dateDepart.addEventListener("change", () => {
         dateArrivee.focus();
         erreur = true;
       } else if (isComplet(dateArrivee.value)) {
-        showPopup("La pension est complète à la date d'arrivée, n'hésitez pas à réserver sur une autre période ou à me contacter.");
+        showPopup("Nous sommes complets à la date d'arrivée, n'hésitez pas à réserver sur une autre période ou à me contacter.");
         dateArrivee.style.color = "red";
         dateArrivee.focus();
         erreur = true;
@@ -423,7 +388,7 @@ dateDepart.addEventListener("change", () => {
         if (!erreur) dateDepart.focus();
         erreur = true;
       } else if (isComplet(dateDepart.value)) {
-        showPopup("La pension est complète à la date de départ, n'hésitez pas à réserver sur une autre période ou à me contacter.");
+        showPopup("Nous sommes complets à la date de départ, n'hésitez pas à réserver sur une autre période ou à me contacter.");
         dateDepart.style.color = "red";
         if (!erreur) dateDepart.focus();
         erreur = true;
