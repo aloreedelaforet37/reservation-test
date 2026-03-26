@@ -404,7 +404,27 @@ dateDepart.addEventListener("change", () => {
         dateArrivee.focus();
         erreur = true;
       }
-    
+
+      // Empêche la saisie plus de 6 mois avant la date d'échéance
+      // Calcul de la date limite (6 mois à partir d'aujourd'hui)
+      const dateMax = new Date();
+      dateMax.setMonth(dateMax.getMonth() + 6);
+      const dateMaxStr = dateMax.toISOString().split("T")[0];
+      
+      if (dateArrivee.value > dateMaxStr) {
+        showPopup("La réservation n'est pas ouverte plus de 6 mois avant la date souhaitée.");
+        dateArrivee.style.color = "red";
+        dateArrivee.focus();
+        erreur = true;
+      }
+      
+      if (!erreur && dateDepart.value > dateMaxStr) {
+        showPopup("La réservation n'est pas ouverte plus de 6 mois avant la date souhaitée.");
+        dateDepart.style.color = "red";
+        dateDepart.focus();
+        erreur = true;
+      }
+            
       if (erreur) return;
       
       const formData = new FormData(formReservation);
