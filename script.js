@@ -76,19 +76,8 @@ window.addEventListener('DOMContentLoaded', () => {
       return date >= d1 && date <= d2;
     });
 }
-/*
-  function crossesClosure(dateA, dateD) {
-    const dA = new Date(dateA);
-    const dD = new Date(dateD);
-    return periodesFermees.some(p => {
-      const f1 = new Date(p.debut);
-      const f2 = new Date(p.fin);
-      return dA < f1 && dD > f2;
-    });
-  }
-*/
 
-  function crossesClosure(dateA, dateD) {
+function crossesClosure(dateA, dateD) {
   const dA = new Date(dateA);
   const dD = new Date(dateD);
 
