@@ -485,26 +485,6 @@ dateDepart.addEventListener("change", () => {
           `📝 Remarque : ${reservation.remarque}`
         );
 
-        
-
-        // Envoi WhatsApp (séparé du try principal)
-        const texte = encodeURIComponent(
-          `🐶 Nouvelle réservation pour ${reservation.nom_chien}\n` +
-          `👤 Propriétaire : ${reservation.nom_proprietaire}\n` +
-          `📧 Email : ${reservation.email}\n` +
-          `📅 Arrivée : ${formatDateFR(reservation.date_arrivee)} à ${reservation.heure_arrivee.replace(":", "h")}\n` +
-          `📅 Départ : ${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}\n` +
-          `📝 Remarque : ${reservation.remarque}`
-        );
-        
-        try {
-          await fetch(`https://api.callmebot.com/whatsapp.php?phone=33627363788&text=${texte}&apikey=1089744`, { mode: "no-cors" });
-        } catch(e) {
-          console.log("WhatsApp non envoyé :", e);
-        }
-        showPopup(`Votre réservation a bien été enregistrée.<br><br>
-          Arrivée : <strong>${formatDateFR(reservation.date_arrivee)} à ${reservation.heure_arrivee.replace(":", "h")}</strong><br>
-          Départ : <strong>${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}</strong>`);
       } catch(err) {
         console.log("Erreur complète :", err);
         const message = err?.message 
@@ -514,6 +494,26 @@ dateDepart.addEventListener("change", () => {
           || JSON.stringify(err);
         showPopup("Erreur : " + message);
       }
+
+
+      // Envoi WhatsApp (séparé du try principal)
+      const texte = encodeURIComponent(
+        `🐶 Nouvelle réservation pour ${reservation.nom_chien}\n` +
+        `👤 Propriétaire : ${reservation.nom_proprietaire}\n` +
+        `📧 Email : ${reservation.email}\n` +
+        `📅 Arrivée : ${formatDateFR(reservation.date_arrivee)} à ${reservation.heure_arrivee.replace(":", "h")}\n` +
+        `📅 Départ : ${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}\n` +
+        `📝 Remarque : ${reservation.remarque}`
+      );
+      try {
+        await fetch(`https://api.callmebot.com/whatsapp.php?phone=33627363788&text=${texte}&apikey=1089744`, { mode: "no-cors" });
+      } catch(e) {
+        console.log("WhatsApp non envoyé :", e);
+      }
+      showPopup(`Votre réservation a bien été enregistrée.<br><br>
+        Arrivée : <strong>${formatDateFR(reservation.date_arrivee)} à ${reservation.heure_arrivee.replace(":", "h")}</strong><br>
+        Départ : <strong>${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}</strong>`);
+
     });
     
   }
