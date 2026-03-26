@@ -379,6 +379,7 @@ dateDepart.addEventListener("change", () => {
     */
 
 dateArrivee.addEventListener("change", () => {
+  dateArrivee.style.color = "";
   dateDepart.min = dateArrivee.value;
   if (!dateDepart.value || dateDepart.value < dateArrivee.value)
     dateDepart.value = dateArrivee.value;
@@ -387,6 +388,7 @@ dateArrivee.addEventListener("change", () => {
 });
 
 dateDepart.addEventListener("change", () => {
+  dateDepart.style.color = "";
   if (dateDepart.value < dateArrivee.value)
     dateDepart.value = dateArrivee.value;
   updateHorairesDepart();
@@ -504,7 +506,13 @@ dateDepart.addEventListener("change", () => {
         updateHorairesDepart();
 
       } catch(err) {
-        showPopup("Erreur en base : " + (err.message || err));
+        console.log("Erreur complète :", err);
+        const message = err?.message 
+          || err?.error_description 
+          || err?.details 
+          || err?.hint 
+          || JSON.stringify(err);
+        showPopup("Erreur : " + message);
       }
     });
     
