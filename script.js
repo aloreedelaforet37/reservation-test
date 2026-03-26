@@ -431,6 +431,7 @@ formReservation.addEventListener("submit", async e => {
 
     const emailAloree = "a.l.oree.de.la.foret.37@gmail.com";
     await Promise.all([
+      // Email pour le client
       emailjs.send("service_22ypgkl", "template_i2nke5k", {
         to_email: reservation.email,
         from_name: "Isabelle - Pension À l'Orée de la Forêt",
@@ -440,7 +441,8 @@ formReservation.addEventListener("submit", async e => {
         date_arrivee: `Du ${formatDateFR(reservation.date_arrivee)} à ${reservation.heure_arrivee.replace(":", "h")}`,
         date_depart: `Au ${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}`
       }),
-      emailjs.send("service_22ypgkl", "template_i2nke5k", {
+      // Email pour moi
+      emailjs.send("service_22ypgkl", "template_r0e2mju", {
         to_email: emailAloree,
         from_name: reservation.nom_proprietaire,
         from_email: emailAloree,
