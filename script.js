@@ -447,7 +447,8 @@ formReservation.addEventListener("submit", async e => {
         subject: "Nouvelle réservation pour " + reservation.nom_chien,
         nomChiens: reservation.nom_chien,
         date_arrivee: `Du ${formatDateFR(reservation.date_arrivee)} à ${reservation.heure_arrivee.replace(":", "h")}`,
-        date_depart: `Au ${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}`
+        date_depart: `Au ${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}`,
+        remarque: reservation.remarque
       })
     ]);
 
