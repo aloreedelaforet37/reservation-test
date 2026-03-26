@@ -342,23 +342,23 @@ function isHeureEte(dateStr) {
     updateHorairesArrivee();
     updateHorairesDepart();
 
-    dateArrivee.addEventListener("change", () => {
+   dateArrivee.addEventListener("change", () => {
 
-      checkClosed(dateArrivee, "arrivee"); return;
-
-      dateDepart.min = dateArrivee.value;
-
-      if (dateDepart.value < dateArrivee.value)
-        dateDepart.value = dateArrivee.value;
-
-      if (crossesClosure(dateArrivee.value,dateDepart.value)) {
-        showPopup("Votre séjour ne peut pas traverser une période de fermeture ou de période complète.");
-        dateArrivee.value = "";
-      }
-
-      updateHorairesArrivee();
-      updateHorairesDepart();
-    });
+    const blocked = checkClosed(dateArrivee, "arrivee");
+  
+    dateDepart.min = dateArrivee.value;
+    if (!dateDepart.value || dateDepart.value < dateArrivee.value)
+      dateDepart.value = dateArrivee.value;
+  
+    if (!blocked && crossesClosure(dateArrivee.value, dateDepart.value)) {
+      showPopup("Votre séjour ne peut pas traverser une période de fermeture ou de période complète.");
+      dateArrivee.value = todayStr;
+      dateDepart.value = todayStr;
+    }
+  
+    updateHorairesArrivee();
+    updateHorairesDepart();
+  });
 
     dateDepart.addEventListener("change", () => {
 
