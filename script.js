@@ -481,7 +481,7 @@ dateDepart.addEventListener("change", () => {
           `👤 Propriétaire : ${reservation.nom_proprietaire}\n` +
           `📧 Email : ${reservation.email}\n` +
           `📅 Arrivée : ${formatDateFR(reservation.date_arrivee)} à ${reservation.heure_arrivee.replace(":", "h")}\n` +
-          `📅 Départ : ${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}`
+          `📅 Départ : ${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}\n` +
           `📝 Remarque : ${reservation.remarque}`
         );
 
