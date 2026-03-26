@@ -109,14 +109,15 @@ window.addEventListener('DOMContentLoaded', () => {
 
 function checkClosed(dateInput, type) {
   if (isClosed(dateInput.value)) {
-    showPopup("La pension est fermée à cette date, n'hésitez pas à réserver sur une autre période.");
-    dateInput.value = type === "arrivee" ? todayStr : dateArrivee.value;
+    showPopup("La pension est fermée à cette date. Merci d'en choisir une autre.");
+    dateInput.style.color = "red";
     return true;
   } else if (isComplet(dateInput.value)) {
-    showPopup("La pension est complète à cette date, n'hésitez pas à réserver sur une autre période ou à me contacter");
-    dateInput.value = type === "arrivee" ? todayStr : dateArrivee.value;
+    showPopup("La pension est complète à cette date. Merci d'en choisir une autre.");
+    dateInput.style.color = "red";
     return true;
   }
+  dateInput.style.color = "";
   return false;
 }
 
@@ -342,39 +343,39 @@ function isHeureEte(dateStr) {
     updateHorairesArrivee();
     updateHorairesDepart();
 
-   dateArrivee.addEventListener("change", () => {
+dateArrivee.addEventListener("change", () => {
 
-    const blocked = checkClosed(dateArrivee, "arrivee");
-  
-    dateDepart.min = dateArrivee.value;
-    if (!dateDepart.value || dateDepart.value < dateArrivee.value)
-      dateDepart.value = dateArrivee.value;
-  
-    if (!blocked && crossesClosure(dateArrivee.value, dateDepart.value)) {
-      showPopup("Votre séjour ne peut pas traverser une période de fermeture ou de période complète.");
-      dateArrivee.value = todayStr;
-      dateDepart.value = todayStr;
-    }
-  
-    updateHorairesArrivee();
-    updateHorairesDepart();
-  });
+  dateArrivee.style.color = "";
+  const blocked = checkClosed(dateArrivee, "arrivee");
 
-    dateDepart.addEventListener("change", () => {
+  dateDepart.min = dateArrivee.value;
+  if (!dateDepart.value || dateDepart.value < dateArrivee.value)
+    dateDepart.value = dateArrivee.value;
 
-      checkClosed(dateDepart, "depart"); return;
+  if (!blocked && crossesClosure(dateArrivee.value, dateDepart.value)) {
+    showPopup("Votre séjour ne peut pas traverser une période de fermeture ou de période complète.");
+    dateArrivee.style.color = "red";
+  }
 
-      if (dateDepart.value < dateArrivee.value)
-        dateDepart.value = dateArrivee.value;
+  updateHorairesArrivee();
+  updateHorairesDepart();
+});
 
-      if (crossesClosure(dateArrivee.value,dateDepart.value)) {
-        showPopup("Votre séjour ne peut pas traverser une période de fermeture.");
-        dateDepart.value = "";
-      }
+dateDepart.addEventListener("change", () => {
 
-      updateHorairesDepart();
-    });
+  dateDepart.style.color = "";
+  const blocked = checkClosed(dateDepart, "depart");
 
+  if (dateDepart.value < dateArrivee.value)
+    dateDepart.value = dateArrivee.value;
+
+  if (!blocked && crossesClosure(dateArrivee.value, dateDepart.value)) {
+    showPopup("Votre séjour ne peut pas traverser une période de fermeture ou de période complète.");
+    dateDepart.style.color = "red";
+  }
+
+  updateHorairesDepart();
+});
       // --- Submit réservation ---
     formReservation.addEventListener("submit", async e => {
       e.preventDefault();
