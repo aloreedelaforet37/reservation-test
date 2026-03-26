@@ -486,6 +486,7 @@ dateDepart.addEventListener("change", () => {
         ]);
 
         showPopup(`Votre réservation du <strong>${formatDateFR(reservation.date_arrivee)} à ${reservation.heure_arrivee.replace(":", "h")}</strong> au <strong>${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}</strong> a bien été enregistrée.`);
+/*
         formReservation.reset();
 
         dateArrivee.value = todayStr;
@@ -493,7 +494,7 @@ dateDepart.addEventListener("change", () => {
         updateNomChiens();
         updateHorairesArrivee();
         updateHorairesDepart();
-
+*/
       } catch(err) {
         console.log("Erreur complète :", err);
         const message = err?.message 
