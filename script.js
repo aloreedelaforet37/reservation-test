@@ -376,7 +376,7 @@ dateDepart.addEventListener("change", () => {
         dateArrivee.focus();
         erreur = true;
       } else if (isComplet(dateArrivee.value)) {
-        showPopup("Nous sommes complets à la date d'arrivée, n'hésitez pas à réserver sur une autre période ou à me contacter.");
+        showPopup("Nous sommes complets le jour de la date d'arrivée, n'hésitez pas à réserver sur une autre période ou à me contacter.");
         dateArrivee.style.color = "red";
         dateArrivee.focus();
         erreur = true;
@@ -388,7 +388,7 @@ dateDepart.addEventListener("change", () => {
         if (!erreur) dateDepart.focus();
         erreur = true;
       } else if (isComplet(dateDepart.value)) {
-        showPopup("Nous sommes complets à la date de départ, n'hésitez pas à réserver sur une autre période ou à me contacter.");
+        showPopup("Nous sommes complets le jour de la date de départ, n'hésitez pas à réserver sur une autre période ou à me contacter.");
         dateDepart.style.color = "red";
         if (!erreur) dateDepart.focus();
         erreur = true;
