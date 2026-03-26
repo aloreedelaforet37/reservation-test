@@ -97,21 +97,6 @@ function crossesClosure(dateA, dateD) {
 
   return traversePeriode || contientDateComplete;
 }
-  
-
-function checkClosed(dateInput, type) {
-  if (isClosed(dateInput.value)) {
-    showPopup("La pension est fermée à cette date, n'hésitez pas à réserver sur une autre période");
-    dateInput.style.color = "red";
-    return true;
-  } else if (isComplet(dateInput.value)) {
-    showPopup("La pension est complète à cette date, n'hésitez pas à réserver sur une autre période ou à me contacter");
-    dateInput.style.color = "red";
-    return true;
-  }
-  dateInput.style.color = "";
-  return false;
-}
 
   // --- Jours fériés ---
   function getEasterDate(year) {
@@ -353,169 +338,152 @@ dateDepart.addEventListener("change", () => {
 
   
       // --- Submit réservation ---
-    formReservation.addEventListener("submit", async e => {
-      e.preventDefault();
-      // Réinitialiser les couleurs
-      dateArrivee.style.color = "";
-      dateDepart.style.color = "";
-    
-      let erreur = false;
+formReservation.addEventListener("submit", async e => {
+  e.preventDefault();
 
-      // Contrôle des dates
-      if (isClosed(dateArrivee.value)) {
-        showPopup("La date d'arrivée est sur une période de fermeture, n'hésitez pas à réserver sur une autre période.");
-        dateArrivee.style.color = "red";
-        dateArrivee.focus();
-        erreur = true;
-      } else if (isComplet(dateArrivee.value)) {
-        showPopup("Nous sommes complets le jour de la date d'arrivée, n'hésitez pas à réserver sur une autre période ou à me contacter.");
-        dateArrivee.style.color = "red";
-        dateArrivee.focus();
-        erreur = true;
-      }
-      if (!erreur) {
-        if (isClosed(dateDepart.value)) {
-          showPopup("La date de départ est sur une période de fermeture, n'hésitez pas à réserver sur une autre période.");
-          dateDepart.style.color = "red";
-          if (!erreur) dateDepart.focus();
-          erreur = true;
-        } else if (isComplet(dateDepart.value)) {
-          showPopup("Nous sommes complets le jour de la date de départ, n'hésitez pas à réserver sur une autre période ou à me contacter.");
-          dateDepart.style.color = "red";
-          if (!erreur) dateDepart.focus();
-          erreur = true;
-        }
-      }
-      
-      if (!erreur && crossesClosure(dateArrivee.value, dateDepart.value)) {
-        showPopup("Votre séjour ne peut pas traverser une période de fermeture ou de période complète.");
-        dateArrivee.style.color = "red";
-        dateDepart.style.color = "red";
-        dateArrivee.focus();
-        erreur = true;
-      }
+  // Réinitialiser les couleurs
+  dateArrivee.style.color = "";
+  dateDepart.style.color = "";
 
-      // Empêche la saisie plus de 6 mois avant la date d'échéance
-      // Calcul de la date limite (6 mois à partir d'aujourd'hui)
-      const dateMax = new Date();
-      dateMax.setMonth(dateMax.getMonth() + 6);
-      const dateMaxStr = dateMax.toISOString().split("T")[0];
-      
-      if (dateArrivee.value > dateMaxStr) {
-        showPopup("La réservation n'est pas ouverte plus de 6 mois avant la date souhaitée.");
-        dateArrivee.style.color = "red";
-        dateArrivee.focus();
-        erreur = true;
-      }
-      
-      if (!erreur && dateDepart.value > dateMaxStr) {
-        showPopup("La réservation n'est pas ouverte plus de 6 mois avant la date souhaitée.");
-        dateDepart.style.color = "red";
-        dateDepart.focus();
-        erreur = true;
-      }
-            
-      if (erreur) return;
-      
-      const formData = new FormData(formReservation);
-      const reservation = {
-        nom_proprietaire: formData.get("nom_proprietaire"),
-        email: formData.get("email"),
-        nb_chien: parseInt(formData.get("nb_chien")) || 1,
-        nom_chien: [],
-        date_arrivee: formData.get("date_arrivee"),
-        heure_arrivee: formData.get("heure_arrivee"),
-        date_depart: formData.get("date_depart"),
-        heure_depart: formData.get("heure_depart"),
-        remarque: formData.get("remarque")
-      };
-      for (let i = 1; i <= reservation.nb_chien; i++) reservation.nom_chien.push(formData.get(`nom_chien_input_${i}`));
+  let erreur = false;
 
-      // Format nom chien
-      if (reservation.nom_chien.length === 1) reservation.nom_chien = reservation.nom_chien[0];
-      else if (reservation.nom_chien.length === 2) reservation.nom_chien = reservation.nom_chien.join(" et ");
-      else {
-        const last = reservation.nom_chien.pop();
-        reservation.nom_chien = reservation.nom_chien.join(", ") + " et " + last;
-      }
-
-      try {
-        const { error } = await supabaseClient.from("reservations").insert([reservation]);
-        if (error) throw error;
-
-        const emailAloree = "a.l.oree.de.la.foret.37@gmail.com";
-        // Envoi email au client et à moi
-        await Promise.all([
-          // Envoi au client
-          emailjs.send(
-          "service_22ypgkl","template_i2nke5k",
-            {
-                to_email: reservation.email,
-                from_name: "Isabelle - Pension À l'Orée de la Forêt",
-                from_email: emailAloree,
-                subject: "Votre réservation pour " + reservation.nom_chien +" a bien été enregistrée",
-                nomChiens: reservation.nom_chien,
-                date_arrivee: `Du ${formatDateFR(reservation.date_arrivee)} à ${reservation.heure_arrivee.replace(":", "h")}`,
-                date_depart: `Au ${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}`
-            }
-          ),
-          // Envoi à moi
-          emailjs.send(
-            "service_22ypgkl","template_i2nke5k",
-            {
-                to_email: emailAloree,
-                from_name: reservation.nom_proprietaire,
-                from_email: emailAloree,
-                subject: "Nouvelle réservation pour " + reservation.nom_chien,
-                nomChiens: reservation.nom_chien,
-                date_arrivee: `Du ${formatDateFR(reservation.date_arrivee)} à ${reservation.heure_arrivee.replace(":", "h")}`,
-                date_depart: `Au ${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}`
-            }
-          )
-        ]);
-
-        // Envoi whatsapp à moi
-
-        const texte = encodeURIComponent(
-          `🐶 Nouvelle réservation pour ${reservation.nom_chien}\n` +
-          `👤 Propriétaire : ${reservation.nom_proprietaire}\n` +
-          `📧 Email : ${reservation.email}\n` +
-          `📅 Arrivée : ${formatDateFR(reservation.date_arrivee)} à ${reservation.heure_arrivee.replace(":", "h")}\n` +
-          `📅 Départ : ${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}\n` +
-          `📝 Remarque : ${reservation.remarque}`
-        );
-
-      } catch(err) {
-        console.log("Erreur complète :", err);
-        const message = err?.message 
-          || err?.error_description 
-          || err?.details 
-          || err?.hint 
-          || JSON.stringify(err);
-        showPopup("Erreur : " + message);
-      }
-
-
-      // Envoi WhatsApp (séparé du try principal)
-      const texte = encodeURIComponent(
-        `🐶 Nouvelle réservation pour ${reservation.nom_chien}\n` +
-        `👤 Propriétaire : ${reservation.nom_proprietaire}\n` +
-        `📧 Email : ${reservation.email}\n` +
-        `📅 Arrivée : ${formatDateFR(reservation.date_arrivee)} à ${reservation.heure_arrivee.replace(":", "h")}\n` +
-        `📅 Départ : ${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}\n` +
-        `📝 Remarque : ${reservation.remarque}`
-      );
-      try {
-        await fetch(`https://api.callmebot.com/whatsapp.php?phone=33627363788&text=${texte}&apikey=1089744`, { mode: "no-cors" });
-      } catch(e) {
-        console.log("WhatsApp non envoyé :", e);
-      }
-      showPopup(`Votre réservation a bien été enregistrée.<br><br>
-        Arrivée : <strong>${formatDateFR(reservation.date_arrivee)} à ${reservation.heure_arrivee.replace(":", "h")}</strong><br>
-        Départ : <strong>${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}</strong>`);
-
-    });
-    
+  // Contrôle des dates
+  if (isClosed(dateArrivee.value)) {
+    showPopup("La date d'arrivée est sur une période de fermeture, n'hésitez pas à réserver sur une autre période.");
+    dateArrivee.style.color = "red";
+    dateArrivee.focus();
+    erreur = true;
+  } else if (isComplet(dateArrivee.value)) {
+    showPopup("Nous sommes complets le jour de la date d'arrivée, n'hésitez pas à réserver sur une autre période ou à me contacter.");
+    dateArrivee.style.color = "red";
+    dateArrivee.focus();
+    erreur = true;
   }
 
+  if (!erreur) {
+    if (isClosed(dateDepart.value)) {
+      showPopup("La date de départ est sur une période de fermeture, n'hésitez pas à réserver sur une autre période.");
+      dateDepart.style.color = "red";
+      dateDepart.focus();
+      erreur = true;
+    } else if (isComplet(dateDepart.value)) {
+      showPopup("Nous sommes complets le jour de la date de départ, n'hésitez pas à réserver sur une autre période ou à me contacter.");
+      dateDepart.style.color = "red";
+      dateDepart.focus();
+      erreur = true;
+    }
+  }
+
+  if (!erreur && crossesClosure(dateArrivee.value, dateDepart.value)) {
+    showPopup("Votre séjour ne peut pas traverser une période de fermeture ou de période complète.");
+    dateArrivee.style.color = "red";
+    dateDepart.style.color = "red";
+    dateArrivee.focus();
+    erreur = true;
+  }
+
+  const dateMax = new Date();
+  dateMax.setMonth(dateMax.getMonth() + 6);
+  const dateMaxStr = dateMax.toISOString().split("T")[0];
+
+  if (!erreur && dateArrivee.value > dateMaxStr) {
+    showPopup("La réservation n'est pas ouverte plus de 6 mois avant la date souhaitée.");
+    dateArrivee.style.color = "red";
+    dateArrivee.focus();
+    erreur = true;
+  }
+
+  if (!erreur && dateDepart.value > dateMaxStr) {
+    showPopup("La réservation n'est pas ouverte plus de 6 mois avant la date souhaitée.");
+    dateDepart.style.color = "red";
+    dateDepart.focus();
+    erreur = true;
+  }
+
+  if (erreur) return;
+
+  const formData = new FormData(formReservation);
+  const reservation = {
+    nom_proprietaire: formData.get("nom_proprietaire"),
+    email: formData.get("email"),
+    nb_chien: parseInt(formData.get("nb_chien")) || 1,
+    nom_chien: [],
+    date_arrivee: formData.get("date_arrivee"),
+    heure_arrivee: formData.get("heure_arrivee"),
+    date_depart: formData.get("date_depart"),
+    heure_depart: formData.get("heure_depart"),
+    remarque: formData.get("remarque")
+  };
+
+  for (let i = 1; i <= reservation.nb_chien; i++)
+    reservation.nom_chien.push(formData.get(`nom_chien_input_${i}`));
+
+  if (reservation.nom_chien.length === 1) reservation.nom_chien = reservation.nom_chien[0];
+  else if (reservation.nom_chien.length === 2) reservation.nom_chien = reservation.nom_chien.join(" et ");
+  else {
+    const last = reservation.nom_chien.pop();
+    reservation.nom_chien = reservation.nom_chien.join(", ") + " et " + last;
+  }
+
+  try {
+    const { error } = await supabaseClient.from("reservations").insert([reservation]);
+    if (error) throw error;
+
+    const emailAloree = "a.l.oree.de.la.foret.37@gmail.com";
+    await Promise.all([
+      emailjs.send("service_22ypgkl", "template_i2nke5k", {
+        to_email: reservation.email,
+        from_name: "Isabelle - Pension À l'Orée de la Forêt",
+        from_email: emailAloree,
+        subject: "Votre réservation pour " + reservation.nom_chien + " a bien été enregistrée",
+        nomChiens: reservation.nom_chien,
+        date_arrivee: `Du ${formatDateFR(reservation.date_arrivee)} à ${reservation.heure_arrivee.replace(":", "h")}`,
+        date_depart: `Au ${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}`
+      }),
+      emailjs.send("service_22ypgkl", "template_i2nke5k", {
+        to_email: emailAloree,
+        from_name: reservation.nom_proprietaire,
+        from_email: emailAloree,
+        subject: "Nouvelle réservation pour " + reservation.nom_chien,
+        nomChiens: reservation.nom_chien,
+        date_arrivee: `Du ${formatDateFR(reservation.date_arrivee)} à ${reservation.heure_arrivee.replace(":", "h")}`,
+        date_depart: `Au ${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}`
+      })
+    ]);
+
+    // Envoi WhatsApp (séparé, ne bloque pas en cas d'échec)
+    const texte = encodeURIComponent(
+      `🐶 Nouvelle réservation pour ${reservation.nom_chien}\n` +
+      `👤 Propriétaire : ${reservation.nom_proprietaire}\n` +
+      `📧 Email : ${reservation.email}\n` +
+      `📅 Arrivée : ${formatDateFR(reservation.date_arrivee)} à ${reservation.heure_arrivee.replace(":", "h")}\n` +
+      `📅 Départ : ${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}\n` +
+      `📝 Remarque : ${reservation.remarque}`
+    );
+    try {
+      await fetch(`https://api.callmebot.com/whatsapp.php?phone=33627363788&text=${texte}&apikey=1089744`, { mode: "no-cors" });
+    } catch(e) {
+      console.log("WhatsApp non envoyé :", e);
+    }
+
+    showPopup(`Votre réservation a bien été enregistrée.<br><br>
+      Arrivée : <strong>${formatDateFR(reservation.date_arrivee)} à ${reservation.heure_arrivee.replace(":", "h")}</strong><br>
+      Départ : <strong>${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}</strong>`);
+
+    formReservation.reset();
+    dateArrivee.value = todayStr;
+    dateDepart.value = todayStr;
+    updateNomChiens();
+    updateHorairesArrivee();
+    updateHorairesDepart();
+
+  } catch(err) {
+    console.log("Erreur complète :", err);
+    const message = err?.message
+      || err?.error_description
+      || err?.details
+      || err?.hint
+      || JSON.stringify(err);
+    showPopup("Erreur : " + message);
+  }
 });
