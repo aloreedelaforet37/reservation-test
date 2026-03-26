@@ -342,7 +342,7 @@ function isHeureEte(dateStr) {
 
     updateHorairesArrivee();
     updateHorairesDepart();
-
+/*
 dateArrivee.addEventListener("change", () => {
 
   dateArrivee.style.color = "";
@@ -376,9 +376,67 @@ dateDepart.addEventListener("change", () => {
 
   updateHorairesDepart();
 });
+    */
+
+dateArrivee.addEventListener("change", () => {
+  dateDepart.min = dateArrivee.value;
+  if (!dateDepart.value || dateDepart.value < dateArrivee.value)
+    dateDepart.value = dateArrivee.value;
+  updateHorairesArrivee();
+  updateHorairesDepart();
+});
+
+dateDepart.addEventListener("change", () => {
+  if (dateDepart.value < dateArrivee.value)
+    dateDepart.value = dateArrivee.value;
+  updateHorairesDepart();
+});
+
+  
       // --- Submit réservation ---
     formReservation.addEventListener("submit", async e => {
       e.preventDefault();
+      // Réinitialiser les couleurs
+      dateArrivee.style.color = "";
+      dateDepart.style.color = "";
+    
+      let erreur = false;
+
+      // Contrôle des dates
+      if (isClosed(dateArrivee.value)) {
+        showPopup("La date d'arrivée est sur une période de fermeture, n'hésitez pas à réserver sur une autre période.");
+        dateArrivee.style.color = "red";
+        dateArrivee.focus();
+        erreur = true;
+      } else if (isComplet(dateArrivee.value)) {
+        showPopup("La pension est complète à la date d'arrivée, n'hésitez pas à réserver sur une autre période ou à me contacter.");
+        dateArrivee.style.color = "red";
+        dateArrivee.focus();
+        erreur = true;
+      }
+    
+      if (isClosed(dateDepart.value)) {
+        showPopup("La date de départ est sur une période de fermeture, n'hésitez pas à réserver sur une autre période.");
+        dateDepart.style.color = "red";
+        if (!erreur) dateDepart.focus();
+        erreur = true;
+      } else if (isComplet(dateDepart.value)) {
+        showPopup("La pension est complète à la date de départ, n'hésitez pas à réserver sur une autre période ou à me contacter.");
+        dateDepart.style.color = "red";
+        if (!erreur) dateDepart.focus();
+        erreur = true;
+      }
+    
+      if (!erreur && crossesClosure(dateArrivee.value, dateDepart.value)) {
+        showPopup("Votre séjour ne peut pas traverser une période de fermeture ou de période complète.");
+        dateArrivee.style.color = "red";
+        dateDepart.style.color = "red";
+        dateArrivee.focus();
+        erreur = true;
+      }
+    
+      if (erreur) return;
+      
       const formData = new FormData(formReservation);
       const reservation = {
         nom_proprietaire: formData.get("nom_proprietaire"),
