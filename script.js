@@ -337,6 +337,7 @@ dateDepart.addEventListener("change", () => {
 });
     
 heureDepart.addEventListener("change", () => {
+  dateDepart.style.color = "";
   heureDepart.style.color = "";
 });
 
