@@ -109,12 +109,15 @@ window.addEventListener('DOMContentLoaded', () => {
 
 function checkClosed(dateInput, type) {
   if (isClosed(dateInput.value)) {
-    showPopup("La pension est fermée à cette date. Merci d'en choisir une autre.");
+    showPopup("La pension est fermée à cette date, n'hésitez pas à réserver sur une autre période.");
     dateInput.value = type === "arrivee" ? todayStr : dateArrivee.value;
+    return true;
   } else if (isComplet(dateInput.value)) {
-    showPopup("La pension est complète à cette date. Merci d'en choisir une autre.");
+    showPopup("La pension est complète à cette date, n'hésitez pas à réserver sur une autre période ou à me contacter");
     dateInput.value = type === "arrivee" ? todayStr : dateArrivee.value;
+    return true;
   }
+  return false;
 }
 
   // --- Jours fériés ---
@@ -341,7 +344,7 @@ function isHeureEte(dateStr) {
 
     dateArrivee.addEventListener("change", () => {
 
-      checkClosed(dateArrivee, "arrivee");
+      checkClosed(dateArrivee, "arrivee"); return;
 
       dateDepart.min = dateArrivee.value;
 
@@ -359,7 +362,7 @@ function isHeureEte(dateStr) {
 
     dateDepart.addEventListener("change", () => {
 
-      checkClosed(dateDepart, "depart");
+      checkClosed(dateDepart, "depart"); return;
 
       if (dateDepart.value < dateArrivee.value)
         dateDepart.value = dateArrivee.value;
