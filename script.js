@@ -112,9 +112,13 @@ function getEasterDate(year) {
   return new Date(year, month - 1, day);
 }
 
-  function formatLocalDate(d) {
-    return d.toISOString().split("T")[0];
-  }
+function formatLocalDate(d) {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+  
   // formate la date eu format "13 mars 2026"
   function formatDateFR(dateStr) {
     const options = { day: "numeric", month: "long", year: "numeric" };
