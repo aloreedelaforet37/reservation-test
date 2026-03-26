@@ -109,11 +109,11 @@ window.addEventListener('DOMContentLoaded', () => {
 
 function checkClosed(dateInput, type) {
   if (isClosed(dateInput.value)) {
-    showPopup("La pension est fermée à cette date. Merci d'en choisir une autre.");
+    showPopup("La pension est fermée à cette date, n'hésitez pas à réserver sur une autre période");
     dateInput.style.color = "red";
     return true;
   } else if (isComplet(dateInput.value)) {
-    showPopup("La pension est complète à cette date. Merci d'en choisir une autre.");
+    showPopup("La pension est complète à cette date, n'hésitez pas à réserver sur une autre période ou à me contacter");
     dateInput.style.color = "red";
     return true;
   }
