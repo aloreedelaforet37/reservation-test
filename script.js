@@ -485,7 +485,7 @@ dateDepart.addEventListener("change", () => {
           )
         ]);
 
-        showPopup("Votre réservation a été enregistrée !");
+        showPopup(`Votre réservation du <strong>${formatDateFR(reservation.date_arrivee)} à ${reservation.heure_arrivee.replace(":", "h")}</strong> au <strong>${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}</strong> a bien été enregistrée.`);
         formReservation.reset();
 
         dateArrivee.value = todayStr;
