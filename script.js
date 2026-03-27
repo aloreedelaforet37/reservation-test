@@ -346,6 +346,9 @@ heureDepart.addEventListener("change", () => {
 formReservation.addEventListener("submit", async e => {
   e.preventDefault();
 
+  const btnSubmit = formReservation.querySelector('button[type="submit"]');
+  btnSubmit.disabled = true;
+
   // Réinitialiser les couleurs
   dateArrivee.style.color = "";
   dateDepart.style.color = "";
@@ -503,6 +506,8 @@ formReservation.addEventListener("submit", async e => {
       || err?.hint
       || JSON.stringify(err);
     showPopup("Erreur : " + message);
+  } finally {
+    btnSubmit.disabled = false; // ← toujours réactivé, succès ou erreur
   }
 });   // fin du addEventListener submit
 }     // fin du if (formReservation)
