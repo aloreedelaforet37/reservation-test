@@ -487,6 +487,18 @@ formReservation.addEventListener("submit", async e => {
       console.log("WhatsApp non envoyé :", e);
     }
 
+    // Envoi Google Sheets
+    try {
+      await fetch("https://script.google.com/macros/s/AKfycbwJNCfjlvAnSaa-BX93GtM5wwLRdcdeP9weHQfQbuU4u9_Xbs9PfXJawnm3PZplthKG/exec", {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(reservation)
+      });
+    } catch(e) {
+      console.log("Google Sheets non mis à jour :", e);
+    }
+
     showPopup(`Votre réservation a bien été enregistrée.<br><br>
       Arrivée : <strong>${formatDateFR(reservation.date_arrivee)} à ${reservation.heure_arrivee.replace(":", "h")}</strong><br>
       Départ : <strong>${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}</strong>`);
