@@ -25,6 +25,25 @@ window.addEventListener('DOMContentLoaded', () => {
     popup.querySelector('.closePopup').addEventListener('click', () => popup.remove());
   }
 
+  // Affiche le message d'attente
+  function showWaiting() {
+  const waiting = document.createElement('div');
+  waiting.id = 'waitingPopup';
+  waiting.className = 'popup';
+  waiting.innerHTML = `
+    <div class="popup-content">
+      <strong>Enregistrement en cours...</strong><br><br>
+      Merci de patienter 🐾
+    </div>`;
+  document.body.appendChild(waiting);
+}
+
+  // Cache le message d'attente
+function hideWaiting() {
+  const waiting = document.getElementById('waitingPopup');
+  if (waiting) waiting.remove();
+}
+
   // --- Périodes de fermeture ---
   const periodesFermees = [
     { debut: "2026-04-19", fin: "2026-04-26" },
@@ -348,6 +367,7 @@ formReservation.addEventListener("submit", async e => {
 
   const btnSubmit = formReservation.querySelector('button[type="submit"]');
   btnSubmit.disabled = true;
+  showWaiting(); // ← affiche la fenêtre d'attente
 
   // Réinitialiser les couleurs
   dateArrivee.style.color = "";
@@ -519,6 +539,7 @@ formReservation.addEventListener("submit", async e => {
       || JSON.stringify(err);
     showPopup("Erreur : " + message);
   } finally {
+    hideWaiting(); // ← masque la fenêtre d'attente
     btnSubmit.disabled = false; // ← toujours réactivé, succès ou erreur
   }
 });   // fin du addEventListener submit
