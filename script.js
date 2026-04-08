@@ -367,7 +367,6 @@ formReservation.addEventListener("submit", async e => {
 
   const btnSubmit = formReservation.querySelector('button[type="submit"]');
   btnSubmit.disabled = true;
-  showWaiting(); // ← affiche la fenêtre d'attente
 
   // Réinitialiser les couleurs
   dateArrivee.style.color = "";
@@ -440,6 +439,8 @@ formReservation.addEventListener("submit", async e => {
 
   if (erreur) return;
 
+  showWaiting(); // ← affiche la fenêtre d'attente
+  
   const formData = new FormData(formReservation);
   const reservation = {
     nom_proprietaire: formData.get("nom_proprietaire"),
