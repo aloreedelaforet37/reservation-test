@@ -519,6 +519,9 @@ formReservation.addEventListener("submit", async e => {
       console.log("Google Sheets non mis à jour :", e);
     }
 
+    const result = await response.json();
+    console.log(result.debug);
+
     showPopup(`Votre réservation a bien été enregistrée.<br><br>
       Arrivée : <strong>${formatDateFR(reservation.date_arrivee)} à ${reservation.heure_arrivee.replace(":", "h")}</strong><br>
       Départ : <strong>${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}</strong>`);
