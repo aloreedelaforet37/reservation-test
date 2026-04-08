@@ -508,10 +508,10 @@ formReservation.addEventListener("submit", async e => {
     }
 */
 
-    console.log("Données envoyées :", JSON.stringify(reservation));
-    
+   
     // Envoi Google Sheets
     try {
+      console.log("Données envoyées :", JSON.stringify(reservation));
       await fetch("https://script.google.com/macros/s/AKfycbwJNCfjlvAnSaa-BX93GtM5wwLRdcdeP9weHQfQbuU4u9_Xbs9PfXJawnm3PZplthKG/exec", {
         method: "POST",
         mode: "no-cors",
