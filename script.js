@@ -4,7 +4,12 @@ window.addEventListener('DOMContentLoaded', () => {
   // --- Supabase ---
   const SUPABASE_URL = 'https://usatdvopaaxrxjiqhgju.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzYXRkdm9wYWF4cnhqaXFoZ2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MjUzNDUsImV4cCI6MjA3NTEwMTM0NX0.D52GPw5yZUJWN1oZD_sop7F7nU9WZLM5OMof1TI3IMc';
-  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false
+  }
+});
 
   // --- EmailJS ---
   if (typeof emailjs !== "undefined") emailjs.init("t6YY80T3DDql9uy32");
@@ -366,6 +371,7 @@ formReservation.addEventListener("submit", async e => {
   e.preventDefault();
 
   const btnSubmit = formReservation.querySelector('button[type="submit"]');
+  showWaiting(); // ← affiche la fenêtre d'attente
   btnSubmit.disabled = true;
 
   // Réinitialiser les couleurs
@@ -437,10 +443,11 @@ formReservation.addEventListener("submit", async e => {
     }
   }
 
-  if (erreur) return;
-
-  showWaiting(); // ← affiche la fenêtre d'attente
-  
+  if (erreur) {
+    btnSubmit.disabled = false;
+    hideWaiting(); // ← masque la fenêtre d'attente
+    return;  
+  }
   const formData = new FormData(formReservation);
   const reservation = {
     nom_proprietaire: formData.get("nom_proprietaire"),
