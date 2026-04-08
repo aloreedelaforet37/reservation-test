@@ -520,11 +520,12 @@ formReservation.addEventListener("submit", async e => {
     // Envoi Google Sheets
     try {
       console.log("Données envoyées :", JSON.stringify(reservation));
+      const formDataToSend = new FormData();
+      formDataToSend.append("data", JSON.stringify(reservation));
       await fetch("https://script.google.com/macros/s/AKfycbwJNCfjlvAnSaa-BX93GtM5wwLRdcdeP9weHQfQbuU4u9_Xbs9PfXJawnm3PZplthKG/exec", {
         method: "POST",
         mode: "no-cors",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify(reservation)
+        body: formDataToSend
       });
     } catch(e) {
       console.log("Google Sheets non mis à jour :", e);
