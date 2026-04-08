@@ -57,8 +57,8 @@ function hideWaiting() {
     { debut: "2026-04-12", fin: "2026-04-18" },
     { debut: "2026-05-08", fin: "2026-05-10" },
     { debut: "2026-05-13", fin: "2026-05-18" },
+    { debut: "2026-05-21", fin: "2026-05-24" },
     { debut: "2026-07-25", fin: "2026-08-24" }
-    
   ];
 
   const encartFermeture = document.getElementById("encartFermeture");
