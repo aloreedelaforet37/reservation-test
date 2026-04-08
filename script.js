@@ -466,7 +466,7 @@ formReservation.addEventListener("submit", async e => {
   try {
     const { error } = await supabaseClient.from("reservations").insert([reservation]);
     if (error) throw error;
-
+/*
     const emailAloree = "a.l.oree.de.la.foret.37@gmail.com";
     await Promise.all([
       // Email pour le client
@@ -506,7 +506,7 @@ formReservation.addEventListener("submit", async e => {
     } catch(e) {
       console.log("WhatsApp non envoyé :", e);
     }
-
+*/
     // Envoi Google Sheets
     try {
       await fetch("https://script.google.com/macros/s/AKfycbwJNCfjlvAnSaa-BX93GtM5wwLRdcdeP9weHQfQbuU4u9_Xbs9PfXJawnm3PZplthKG/exec", {
