@@ -515,17 +515,13 @@ formReservation.addEventListener("submit", async e => {
       console.log("WhatsApp non envoyé :", e);
     }
 */
-
-   
     // Envoi Google Sheets
     try {
       console.log("Données envoyées :", JSON.stringify(reservation));
-      const formDataToSend = new FormData();
-      formDataToSend.append("data", JSON.stringify(reservation));
-      await fetch("https://script.google.com/macros/s/AKfycbwJNCfjlvAnSaa-BX93GtM5wwLRdcdeP9weHQfQbuU4u9_Xbs9PfXJawnm3PZplthKG/exec", {
-        method: "POST",
-        mode: "no-cors",
-        body: formDataToSend
+      const params = encodeURIComponent(JSON.stringify(reservation));
+      await fetch(`https://script.google.com/macros/s/AKfycbwJNCfjlvAnSaa-BX93GtM5wwLRdcdeP9weHQfQbuU4u9_Xbs9PfXJawnm3PZplthKG/exec?data=${params}`, {
+        method: "GET",
+        mode: "no-cors"
       });
     } catch(e) {
       console.log("Google Sheets non mis à jour :", e);
