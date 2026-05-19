@@ -69,6 +69,23 @@ function hideWaiting() {
     }
   }
 
+  // --- WhatsApp d'alerte période fermée/complète ---
+  async function sendAlertWhatsApp(reservation) {
+    const texte = encodeURIComponent(
+      `⚠️ Tentative de réservation sur période fermée/complète\n` +
+      `🐶 Chien(s) : ${reservation.nom_chien}\n` +
+      `👤 Propriétaire : ${reservation.nom_proprietaire}\n` +
+      `📅 Arrivée : ${formatDateFR(reservation.date_arrivee)} à ${reservation.heure_arrivee.replace(":", "h")}\n` +
+      `📅 Départ : ${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}\n` +
+      `📝 Remarque : ${reservation.remarque}`
+    );
+    try {
+      await fetch(`https://api.callmebot.com/whatsapp.php?phone=33627363788&text=${texte}&apikey=1089744`, { mode: "no-cors" });
+    } catch(e) {
+      console.log("WhatsApp d'alerte non envoyé :", e);
+    }
+  }
+
   // --- Périodes de fermeture ---
   const periodesFermees = [
     { debut: "2026-04-19", fin: "2026-04-26" },
@@ -490,6 +507,7 @@ formReservation.addEventListener("submit", async e => {
       remarque: formDataAlert.get("remarque") || ""
     };
     sendAlertEmail(reservationAlert);
+    sendAlertWhatsApp(reservationAlert);
 
     btnSubmit.disabled = false;
     hideWaiting(); // ← masque la fenêtre d'attente
