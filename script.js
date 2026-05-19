@@ -15,6 +15,7 @@ window.addEventListener('DOMContentLoaded', () => {
   if (typeof emailjs !== "undefined") emailjs.init("t6YY80T3DDql9uy32");
 
   const todayStr = new Date().toISOString().split("T")[0];
+  const emailAloree = "a.l.oree.de.la.foret.37@gmail.com";
 
   // --- Popup ---
   function showPopup(message) {
@@ -48,6 +49,25 @@ function hideWaiting() {
   const waiting = document.getElementById('waitingPopup');
   if (waiting) waiting.remove();
 }
+
+  // --- Email d'alerte période fermée/complète ---
+  async function sendAlertEmail(reservation) {
+    if (typeof emailjs === "undefined") return;
+    try {
+      await emailjs.send("service_22ypgkl", "template_r0e2mju", {
+        to_email: emailAloree,
+        from_name: reservation.nom_proprietaire,
+        from_email: emailAloree,
+        subject: "Réservation pour " + reservation.nom_chien + " a été enregistrée, mais dans une période complète ou de fermeture",
+        nomChiens: reservation.nom_chien,
+        date_arrivee: `Du ${formatDateFR(reservation.date_arrivee)} à ${reservation.heure_arrivee.replace(":", "h")}`,
+        date_depart: `Au ${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}`,
+        remarque: reservation.remarque
+      });
+    } catch(e) {
+      console.log("Email d'alerte non envoyé :", e);
+    }
+  }
 
   // --- Périodes de fermeture ---
   const periodesFermees = [
@@ -447,6 +467,30 @@ formReservation.addEventListener("submit", async e => {
   }
 
   if (erreur) {
+    // Construit l'objet reservation pour l'email d'alerte (même structure que le mail admin)
+    const formDataAlert = new FormData(formReservation);
+    const nbAlert = parseInt(formDataAlert.get("nb_chien")) || 1;
+    const nomsAlert = [];
+    for (let i = 1; i <= nbAlert; i++) {
+      const n = formDataAlert.get(`nom_chien_input_${i}`);
+      if (n) nomsAlert.push(n);
+    }
+    let nomChienAlert;
+    if (nomsAlert.length === 0) nomChienAlert = "chien inconnu";
+    else if (nomsAlert.length === 1) nomChienAlert = nomsAlert[0];
+    else if (nomsAlert.length === 2) nomChienAlert = nomsAlert.join(" et ");
+    else { const last = nomsAlert.pop(); nomChienAlert = nomsAlert.join(", ") + " et " + last; }
+    const reservationAlert = {
+      nom_proprietaire: formDataAlert.get("nom_proprietaire") || "inconnu",
+      nom_chien: nomChienAlert,
+      date_arrivee: formDataAlert.get("date_arrivee") || dateArrivee.value,
+      heure_arrivee: formDataAlert.get("heure_arrivee") || heureArrivee.value || "00:00",
+      date_depart: formDataAlert.get("date_depart") || dateDepart.value,
+      heure_depart: formDataAlert.get("heure_depart") || heureDepart.value || "00:00",
+      remarque: formDataAlert.get("remarque") || ""
+    };
+    sendAlertEmail(reservationAlert);
+
     btnSubmit.disabled = false;
     hideWaiting(); // ← masque la fenêtre d'attente
     return;  
@@ -478,7 +522,6 @@ formReservation.addEventListener("submit", async e => {
     const { error } = await supabaseClient.from("reservations").insert([reservation]);
     if (error) throw error;
 
-    const emailAloree = "a.l.oree.de.la.foret.37@gmail.com";
     await Promise.all([
       // Email pour le client
       emailjs.send("service_22ypgkl", "template_i2nke5k", {
