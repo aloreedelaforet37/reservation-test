@@ -88,6 +88,7 @@ function hideWaiting() {
 
   // --- Périodes de fermeture ---
   const periodesFermees = [
+    { debut: "2026-05-26", fin: "2026-05-31" },
     { debut: "2026-07-03", fin: "2026-07-23" },
     { debut: "2026-10-16", fin: "2026-10-24" },
     { debut: "2026-12-19", fin: "2026-12-27" }
