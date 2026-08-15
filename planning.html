@@ -470,7 +470,11 @@ document.getElementById('btn-login').addEventListener('click', async () => {
   const email = document.getElementById('login-email').value.trim();
   const msg = document.getElementById('login-msg');
   if (!email) return;
-  const { error } = await supabase.auth.signInWithOtp({ email });
+    const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: { emailRedirectTo: window.location.href },
+  });
+  
   msg.textContent = error
     ? "Erreur d'envoi, réessayez."
     : 'Lien envoyé — vérifiez votre boîte mail.';
