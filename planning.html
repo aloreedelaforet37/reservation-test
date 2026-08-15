@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Planning — À l'orée de la forêt</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root {
+    --bg: #EDE7DA; --panel: #F6F2E8; --border: #DED5C0; --border-light: #E5DCC8;
+    --ink: #2B231A; --muted: #6B5D4A; --muted-light: #8A7A5C;
+    --green: #4A6B4E; --amber: #C08A3E; --red: #B5533C; --cream: #F3F0E8;
+    --male: #3F6E8C; --female: #B5637E; --day: #D9A441; --night: #6B5B95;
+  }
+  body { background: var(--bg); color: var(--ink); }
+  .font-serif { font-family: Georgia, 'Times New Roman', serif; }
+</style>
+</head>
+<body class="font-sans">
+
+<!-- Écran de connexion : bloque l'accès tant qu'on n'est pas identifié -->
+<div id="login-gate" class="min-h-screen flex items-center justify-center p-6">
+  <div class="max-w-sm w-full rounded-xl border p-6" style="border-color: var(--border); background: var(--panel)">
+    <h1 class="font-serif text-lg mb-1">Espace admin</h1>
+    <p class="text-xs mb-4" style="color: var(--muted)">Connectez-vous avec votre email habituel.</p>
+    <input id="login-email" type="email" placeholder="votre@email.fr"
+           class="w-full border rounded-lg px-3 py-2 text-sm mb-2" style="border-color: var(--border)" />
+    <button id="btn-login" class="w-full rounded-lg px-3 py-2 text-sm font-medium"
+            style="background: var(--green); color: var(--cream)">
+      Recevoir le lien de connexion
+    </button>
+    <p id="login-msg" class="text-xs mt-3" style="color: var(--muted)"></p>
+  </div>
+</div>
+
+<div id="app-content" class="max-w-5xl mx-auto p-4 sm:p-8" style="display:none">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-6">
+    <div class="flex items-center gap-2">
+      <span class="text-xl" style="color: var(--green)">🌿</span>
+      <div>
+        <h1 class="font-serif text-xl sm:text-2xl tracking-tight">Planning — À l'orée de la forêt</h1>
+        <p class="text-xs mt-0.5" style="color: var(--muted)" id="capacite-label">Chargement...</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-1">
+      <button id="btn-prev" class="p-2 rounded-full hover:bg-[var(--border-light)] transition-colors" aria-label="Semaine précédente">←</button>
+      <button id="btn-next" class="p-2 rounded-full hover:bg-[var(--border-light)] transition-colors" aria-label="Semaine suivante">→</button>
+    </div>
+  </div>
+
+  <!-- Vue desktop : bande d'occupation + planning Gantt (masquée sous 768px) -->
+  <div class="hidden md:block">
+    <div class="mb-2 overflow-x-auto">
+      <div id="occupation-strip" class="min-w-[820px] grid gap-px" style="grid-template-columns: 210px repeat(14, 1fr);"></div>
+    </div>
+    <div class="overflow-x-auto rounded-xl border" style="border-color: var(--border); background: var(--panel)">
+      <div id="gantt-grid" class="min-w-[820px]"></div>
+    </div>
+  </div>
+
+  <!-- Vue mobile : liste verticale jour par jour (affichée sous 768px) -->
+  <div id="mobile-list" class="md:hidden space-y-3"></div>
+
+  <!-- Detail panel (jour sélectionné) — desktop uniquement, la vue mobile liste déjà tous les jours -->
+  <div class="mt-4 rounded-xl border p-4 hidden md:block" style="border-color: var(--border); background: var(--panel)" id="detail-panel"></div>
+
+  <!-- Legend -->
+  <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-4 text-xs" style="color: var(--muted)">
+    <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm" style="background: var(--green)"></span>Réservation confirmée</div>
+    <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm" style="background: var(--amber)"></span>En attente / à trancher</div>
+    <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm" style="background: var(--red)"></span>Complet (confirmées seules)</div>
+    <span style="color: var(--border-light)">|</span>
+    <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm" style="background: var(--day)"></span>Occupation jour</div>
+    <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm" style="background: var(--night)"></span>Occupation nuit</div>
+    <span style="color: var(--border-light)">|</span>
+    <div class="flex items-center gap-1.5"><span class="font-medium" style="color: var(--male)">Mâle</span></div>
+    <div class="flex items-center gap-1.5"><span class="font-medium" style="color: var(--female)">Femelle</span></div>
+  </div>
+
+</div>
+
+</div><!-- /app-content -->
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+// ============================================================
+// CONFIG
+// Cette page n'utilise QUE la clé publique "anon" — sans danger
+// à exposer. L'accès aux données passe par l'Edge Function
+// "admin-planning", qui vérifie côté serveur que vous êtes bien
+// l'admin avant d'utiliser la service_role key en interne.
+// ============================================================
+const SUPABASE_URL = 'https://VOTRE-PROJET.supabase.co';
+const SUPABASE_ANON_KEY = 'VOTRE_ANON_KEY'; // clé publique, sans risque
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const DAY_COUNT = 14;
+let CAPACITY = 6;
+let weekOffset = 0;
+let selectedDayOffset = 0;
+let reservations = []; // reservations enrichies, chargées depuis Supabase
+
+const today = new Date();
+today.setHours(0, 0, 0, 0);
+
+function fmtDay(offset) {
+  const d = new Date(today);
+  d.setDate(d.getDate() + offset);
+  return d;
+}
+function toISODate(d) {
+  return d.toISOString().slice(0, 10);
+}
+function hexToRgba(hex, alpha) {
+  const h = hex.replace('#', '');
+  const r = parseInt(h.substring(0, 2), 16);
+  const g = parseInt(h.substring(2, 4), 16);
+  const b = parseInt(h.substring(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+function sexColor(sexe) {
+  return sexe === 'M' ? 'var(--male)' : 'var(--female)';
+}
+function paymentInfo(prix, regle) {
+  if (regle >= prix) return { color: 'var(--green)', label: 'réglé' };
+  if (regle > 0) return { color: 'var(--amber)', label: 'acompte versé' };
+  return { color: 'var(--red)', label: 'rien réglé' };
+}
+function statusColor(status) {
+  return status === 'complet' ? 'var(--red)' : status === 'a_confirmer' ? 'var(--amber)' : 'var(--green)';
+}
+// dayIdx = nombre de jours depuis aujourd'hui (peut être négatif)
+function dayIdxOf(dateISO) {
+  const d = new Date(dateISO + 'T00:00:00');
+  return Math.round((d - today) / 86400000);
+}
+
+// ============================================================
+// CHARGEMENT DES DONNÉES
+// ============================================================
+async function chargerParametres() {
+  const { data } = await supabase.from('parametres').select('capacite_places').single();
+  if (data) CAPACITY = data.capacite_places;
+  document.getElementById('capacite-label').textContent = `${CAPACITY} places disponibles`;
+}
+
+async function chargerReservations() {
+  const rangeStart = toISODate(fmtDay(weekOffset));
+  const rangeEnd = toISODate(fmtDay(weekOffset + DAY_COUNT - 1));
+
+  // Appel à l'Edge Function : le token de VOTRE session est envoyé
+  // automatiquement, la fonction vérifie que vous êtes admin avant
+  // de répondre. La service_role key ne quitte jamais le serveur.
+  const { data, error } = await supabase.functions.invoke('admin-planning', {
+    body: { rangeStart, rangeEnd },
+  });
+
+  if (error) {
+    console.error(error);
+    document.getElementById('detail-panel').innerHTML =
+      `<p class="text-sm text-red-700">Erreur d'accès : vérifiez que vous êtes bien connecté(e) et marqué(e) admin (est_admin = true).</p>`;
+    return;
+  }
+
+  reservations = data.map((r) => ({
+    id: r.id,
+    client: r.client?.nom ?? '',
+    start: dayIdxOf(r.date_debut),
+    end: dayIdxOf(r.date_fin),
+    status: r.statut === 'confirmee' ? 'confirmed' : 'pending', // annulee/terminee filtrées en amont si besoin
+    arrivalTime: r.heure_arrivee?.slice(0, 5) ?? '',
+    departureTime: r.heure_depart?.slice(0, 5) ?? '',
+    dogs: r.reservation_dogs.map((rd) => ({
+      name: rd.dog.nom,
+      sex: rd.dog.sexe,
+      price: Number(rd.prix),
+      paid: Number(rd.montant_regle),
+    })),
+  }));
+}
+
+// ============================================================
+// CALCULS D'OCCUPATION
+// ============================================================
+function occupationJour(dayIdx) {
+  const present = reservations.filter((r) => dayIdx >= r.start && dayIdx <= r.end);
+  const confirmed = present.filter((r) => r.status === 'confirmed').reduce((s, r) => s + r.dogs.length, 0);
+  const pending = present.filter((r) => r.status === 'pending').reduce((s, r) => s + r.dogs.length, 0);
+  const total = confirmed + pending;
+  let status = 'libre';
+  if (confirmed >= CAPACITY) status = 'complet';
+  else if (total >= CAPACITY) status = 'a_confirmer';
+  return { confirmed, pending, total, status };
+}
+
+function occupationDetail(dayIdx) {
+  const present = reservations.filter((r) => dayIdx >= r.start && dayIdx <= r.end);
+  const arrivals = present.filter((r) => r.start === dayIdx);
+  const departures = present.filter((r) => r.end === dayIdx);
+
+  const confirmedCount = present.filter((r) => r.status === 'confirmed').reduce((s, r) => s + r.dogs.length, 0);
+  const pendingCount = present.filter((r) => r.status === 'pending').reduce((s, r) => s + r.dogs.length, 0);
+
+  const departuresConfirmed = departures.filter((r) => r.status === 'confirmed').reduce((s, r) => s + r.dogs.length, 0);
+  const departuresPending = departures.filter((r) => r.status === 'pending').reduce((s, r) => s + r.dogs.length, 0);
+  const nightConfirmedCount = confirmedCount - departuresConfirmed;
+  const nightPendingCount = pendingCount - departuresPending;
+
+  return { present, arrivals, departures, confirmedCount, pendingCount, nightConfirmedCount, nightPendingCount };
+}
+
+// ============================================================
+// RENDU : chaîne HTML des chiens d'une réservation (sur une ligne)
+// ============================================================
+function renderDogsLabel(dogs) {
+  return dogs
+    .map((d, i) => {
+      const pay = paymentInfo(d.price, d.paid);
+      const reste = d.price - d.paid;
+      const sep = i < dogs.length - 1 ? '<span class="text-[var(--muted-light)]">·</span>' : '';
+      return `
+        <span class="inline-flex items-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full shrink-0" style="background:${pay.color}" title="${pay.label}"></span>
+          <span class="text-sm font-medium" style="color:${sexColor(d.sex)}">${d.name}</span>
+          <span class="text-[10px]" style="color: var(--muted)">
+            ${d.price}€${reste > 0 ? ` (reste ${reste}€)` : ''}
+          </span>
+          ${sep}
+        </span>`;
+    })
+    .join('');
+}
+
+// ============================================================
+// RENDU : bande d'occupation
+// ============================================================
+function renderOccupationStrip() {
+  const el = document.getElementById('occupation-strip');
+  let html = `<div class="text-[11px] uppercase tracking-wide flex items-center pl-1" style="color: var(--muted)">Occupation</div>`;
+
+  for (let i = 0; i < DAY_COUNT; i++) {
+    const dayIdx = weekOffset + i;
+    const d = fmtDay(dayIdx);
+    const isToday = dayIdx === 0;
+    const isSelected = dayIdx === selectedDayOffset;
+    const { confirmed, total, status } = occupationJour(dayIdx);
+    const color = statusColor(status);
+    const opacity = 0.35 + 0.65 * (Math.min(total, CAPACITY) / CAPACITY);
+
+    html += `
+      <button
+        data-day="${dayIdx}"
+        class="jour-btn flex flex-col items-center px-1 py-1 rounded-lg transition-colors"
+        style="background:${isSelected ? 'var(--border)' : 'transparent'}"
+      >
+        <span class="text-[10px]" style="color:${isToday ? 'var(--green)' : 'var(--muted)'}; font-weight:${isToday ? 600 : 400}">
+          ${d.toLocaleDateString('fr-FR', { weekday: 'short' })}
+        </span>
+        <span class="text-xs mb-1" style="font-weight:${isToday ? 600 : 400}">${d.getDate()}</span>
+        <div class="w-full h-1.5 rounded-full" style="background:${color}; opacity:${opacity}"
+             title="${confirmed}/${CAPACITY} chiens confirmés${total > confirmed ? ` (+${total - confirmed} en attente)` : ''}"></div>
+      </button>`;
+  }
+  el.innerHTML = html;
+  el.querySelectorAll('.jour-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      selectedDayOffset = parseInt(btn.dataset.day, 10);
+      renderTout();
+    });
+  });
+}
+
+// ============================================================
+// RENDU : planning Gantt
+// ============================================================
+function renderGantt() {
+  const el = document.getElementById('gantt-grid');
+  let html = '';
+
+  reservations.forEach((r) => {
+    html += `<div class="grid items-center border-b last:border-b-0" style="grid-template-columns: 210px repeat(${DAY_COUNT}, 1fr); border-color: var(--border-light)">`;
+
+    html += `
+      <div class="pl-3 py-2 flex items-start gap-1.5 sticky left-0" style="background: var(--panel)">
+        <span class="mt-0.5" style="color: var(--muted-light)">🐾</span>
+        <div class="min-w-0">
+          <div class="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">${renderDogsLabel(r.dogs)}</div>
+          <div class="text-[10px] truncate" style="color: var(--muted-light)">${r.client}</div>
+        </div>
+      </div>`;
+
+    for (let i = 0; i < DAY_COUNT; i++) {
+      const dayIdx = weekOffset + i;
+      const inRange = dayIdx >= r.start && dayIdx <= r.end;
+      const isStart = dayIdx === r.start;
+      const isEnd = dayIdx === r.end;
+
+      if (!inRange) {
+        html += `<div class="h-9 relative px-0.5"></div>`;
+        continue;
+      }
+      const bg = r.status === 'confirmed' ? 'var(--green)' : 'var(--amber)';
+      const color = r.status === 'confirmed' ? 'var(--cream)' : 'var(--ink)';
+      const rounded = `${isStart ? 'rounded-l-md' : ''} ${isEnd ? 'rounded-r-md' : ''}`;
+      const label = r.status === 'pending' ? 'en attente' : (r.dogs.length > 1 ? `${r.dogs.length} chiens` : '');
+
+      html += `
+        <div class="h-9 relative px-0.5">
+          <div class="absolute inset-y-1.5 ${isStart ? 'left-0.5' : '-left-0.5'} ${isEnd ? 'right-0.5' : '-right-0.5'} ${rounded} flex items-center justify-center"
+               style="background:${bg}; color:${color}">
+            ${isStart ? `<span class="text-[10px] font-medium px-1 truncate">${label}</span>` : ''}
+          </div>
+        </div>`;
+    }
+    html += `</div>`;
+  });
+
+  el.innerHTML = html;
+}
+
+// ============================================================
+// RENDU : panneau de détail (jour sélectionné)
+// ============================================================
+function renderDetail() {
+  const el = document.getElementById('detail-panel');
+  const dayIdx = selectedDayOffset;
+  const d = fmtDay(dayIdx);
+  const detail = occupationDetail(dayIdx);
+
+  let rowsHtml = '';
+  if (detail.present.length === 0) {
+    rowsHtml = `<p class="text-sm" style="color: var(--muted-light)">Aucun chien présent ce jour-là.</p>`;
+  } else {
+    rowsHtml = `<div class="space-y-2">` + detail.present.map((r) => {
+      let badges = '';
+      if (r.start === dayIdx) badges += `<span class="text-[10px] px-1.5 py-0.5 rounded" style="background:${hexToRgba('#4A6B4E', 0.15)}; color: var(--green)">arrivée ${r.arrivalTime}</span>`;
+      if (r.end === dayIdx) badges += `<span class="text-[10px] px-1.5 py-0.5 rounded" style="background:${hexToRgba('#8A7A5C', 0.15)}; color: var(--muted-light)">départ ${r.departureTime}</span>`;
+      if (r.status === 'pending') badges += `<span class="text-[10px] px-1.5 py-0.5 rounded" style="background:${hexToRgba('#C08A3E', 0.2)}; color: var(--amber)">en attente</span>`;
+
+      return `
+        <div class="flex items-start justify-between text-sm py-1.5 border-b last:border-b-0 gap-2" style="border-color: var(--border-light)">
+          <div class="flex items-start gap-2 min-w-0">
+            <span class="mt-0.5" style="color: var(--muted-light)">🐾</span>
+            <div class="min-w-0">
+              <div class="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">${renderDogsLabel(r.dogs)}</div>
+              <div class="text-[10px]" style="color: var(--muted-light)">${r.client}</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 shrink-0 flex-wrap justify-end">${badges}</div>
+        </div>`;
+    }).join('') + `</div>`;
+  }
+
+  const arrDepLine = (detail.arrivals.length > 0 || detail.departures.length > 0)
+    ? `<p class="text-xs mt-3" style="color: var(--muted-light)">
+         ${detail.arrivals.length} arrivée${detail.arrivals.length > 1 ? 's' : ''} ·
+         ${detail.departures.length} départ${detail.departures.length > 1 ? 's' : ''}
+       </p>`
+    : '';
+
+  el.innerHTML = `
+    <div class="flex items-baseline justify-between mb-3">
+      <h2 class="font-serif text-base">${d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</h2>
+    </div>
+    ${rowsHtml}
+    ${arrDepLine}
+    <div class="flex items-center gap-2 mt-3 pt-3 border-t" style="border-color: var(--border-light)">
+      <span class="text-xs font-medium px-2 py-1 rounded-lg" style="background:${hexToRgba('#D9A441', 0.2)}; color: var(--day)">
+        Jour : ${detail.confirmedCount}/${CAPACITY}${detail.pendingCount > 0 ? ` (+${detail.pendingCount})` : ''}
+      </span>
+      <span class="text-xs font-medium px-2 py-1 rounded-lg" style="background:${hexToRgba('#6B5B95', 0.2)}; color: var(--night)">
+        Nuit : ${detail.nightConfirmedCount}/${CAPACITY}${detail.nightPendingCount > 0 ? ` (+${detail.nightPendingCount})` : ''}
+      </span>
+    </div>`;
+}
+
+// ============================================================
+// RENDU : vue mobile — une carte par jour, empilées verticalement
+// ============================================================
+function renderMobileList() {
+  const el = document.getElementById('mobile-list');
+  let html = '';
+
+  for (let i = 0; i < DAY_COUNT; i++) {
+    const dayIdx = weekOffset + i;
+    const d = fmtDay(dayIdx);
+    const isToday = dayIdx === 0;
+    const detail = occupationDetail(dayIdx);
+    const jourStatus = occupationJour(dayIdx).status;
+
+    let rowsHtml = '';
+    if (detail.present.length === 0) {
+      rowsHtml = `<p class="text-xs mt-1" style="color: var(--muted-light)">Aucun chien.</p>`;
+    } else {
+      rowsHtml = detail.present.map((r) => {
+        let badges = '';
+        if (r.start === dayIdx) badges += `<span class="text-[10px] px-1.5 py-0.5 rounded" style="background:${hexToRgba('#4A6B4E', 0.15)}; color: var(--green)">arrivée ${r.arrivalTime}</span>`;
+        if (r.end === dayIdx) badges += `<span class="text-[10px] px-1.5 py-0.5 rounded" style="background:${hexToRgba('#8A7A5C', 0.15)}; color: var(--muted-light)">départ ${r.departureTime}</span>`;
+        if (r.status === 'pending') badges += `<span class="text-[10px] px-1.5 py-0.5 rounded" style="background:${hexToRgba('#C08A3E', 0.2)}; color: var(--amber)">en attente</span>`;
+        return `
+          <div class="flex items-start justify-between gap-2 py-1.5 border-b last:border-b-0" style="border-color: var(--border-light)">
+            <div class="min-w-0">
+              <div class="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">${renderDogsLabel(r.dogs)}</div>
+              <div class="text-[10px]" style="color: var(--muted-light)">${r.client}</div>
+            </div>
+            <div class="flex flex-wrap gap-1 justify-end shrink-0">${badges}</div>
+          </div>`;
+      }).join('');
+    }
+
+    html += `
+      <div class="rounded-xl border p-3" style="border-color:${isToday ? 'var(--green)' : 'var(--border)'}; background: var(--panel)">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="font-serif text-sm" style="color:${isToday ? 'var(--green)' : 'var(--ink)'}">
+            ${d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' })}
+          </h3>
+          <span class="w-2 h-2 rounded-full" style="background:${statusColor(jourStatus)}"></span>
+        </div>
+        ${rowsHtml}
+        <div class="flex items-center gap-2 mt-2 pt-2 border-t" style="border-color: var(--border-light)">
+          <span class="text-[10px] font-medium px-1.5 py-0.5 rounded" style="background:${hexToRgba('#D9A441', 0.2)}; color: var(--day)">
+            Jour ${detail.confirmedCount}/${CAPACITY}${detail.pendingCount > 0 ? ` (+${detail.pendingCount})` : ''}
+          </span>
+          <span class="text-[10px] font-medium px-1.5 py-0.5 rounded" style="background:${hexToRgba('#6B5B95', 0.2)}; color: var(--night)">
+            Nuit ${detail.nightConfirmedCount}/${CAPACITY}${detail.nightPendingCount > 0 ? ` (+${detail.nightPendingCount})` : ''}
+          </span>
+        </div>
+      </div>`;
+  }
+  el.innerHTML = html;
+}
+
+// ============================================================
+// ORCHESTRATION
+// ============================================================
+function renderTout() {
+  renderOccupationStrip();
+  renderGantt();
+  renderDetail();
+  renderMobileList();
+}
+
+document.getElementById('btn-prev').addEventListener('click', async () => {
+  weekOffset -= 7;
+  await chargerReservations();
+  renderTout();
+});
+document.getElementById('btn-next').addEventListener('click', async () => {
+  weekOffset += 7;
+  await chargerReservations();
+  renderTout();
+});
+
+// ============================================================
+// AUTHENTIFICATION (magic link) — protège l'accès à la page
+// ============================================================
+async function afficherApp() {
+  document.getElementById('login-gate').style.display = 'none';
+  document.getElementById('app-content').style.display = 'block';
+  await chargerParametres();
+  await chargerReservations();
+  renderTout();
+}
+
+document.getElementById('btn-login').addEventListener('click', async () => {
+  const email = document.getElementById('login-email').value.trim();
+  const msg = document.getElementById('login-msg');
+  if (!email) return;
+  const { error } = await supabase.auth.signInWithOtp({ email });
+  msg.textContent = error
+    ? "Erreur d'envoi, réessayez."
+    : 'Lien envoyé — vérifiez votre boîte mail.';
+});
+
+(async function init() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) {
+    await afficherApp();
+  }
+  // Si on revient du lien magique (ou si la session change), on relance l'app
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (session) afficherApp();
+  });
+})();
+</script>
+</body>
+</html>
