@@ -93,9 +93,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 // "admin-planning", qui vérifie côté serveur que vous êtes bien
 // l'admin avant d'utiliser la service_role key en interne.
 // ============================================================
-// --- Supabase ---
-const SUPABASE_URL = 'https://usatdvopaaxrxjiqhgju.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzYXRkdm9wYWF4cnhqaXFoZ2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MjUzNDUsImV4cCI6MjA3NTEwMTM0NX0.D52GPw5yZUJWN1oZD_sop7F7nU9WZLM5OMof1TI3IMc';// clé publique, sans risque
+const SUPABASE_URL = 'https://VOTRE-PROJET.supabase.co';
+const SUPABASE_ANON_KEY = 'VOTRE_ANON_KEY'; // clé publique, sans risque
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const DAY_COUNT = 14;
@@ -470,13 +469,15 @@ document.getElementById('btn-login').addEventListener('click', async () => {
   const email = document.getElementById('login-email').value.trim();
   const msg = document.getElementById('login-msg');
   if (!email) return;
-    const { error } = await supabase.auth.signInWithOtp({
+  const { error } = await supabase.auth.signInWithOtp({
     email,
-    options: { emailRedirectTo: window.location.href },
+    options: {
+      emailRedirectTo: window.location.href,
+      shouldCreateUser: false, // n'envoie un lien QUE si le compte existe déjà
+    },
   });
-  
   msg.textContent = error
-    ? "Erreur d'envoi, réessayez."
+    ? "Cet email n'est pas autorisé à accéder à cet espace."
     : 'Lien envoyé — vérifiez votre boîte mail.';
 });
 
