@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mon espace — À l'orée de la forêt</title>
+<link rel="manifest" href="data:application/json,{%22name%22:%22Mon%20espace%20-%20%C3%80%20l%27or%C3%A9e%20de%20la%20for%C3%AAt%22,%22display%22:%22standalone%22,%22start_url%22:%22.%22}" />
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root {
+    --bg: #EDE7DA; --panel: #F6F2E8; --border: #DED5C0; --border-light: #E5DCC8;
+    --ink: #2B231A; --muted: #6B5D4A; --muted-light: #8A7A5C;
+    --green: #4A6B4E; --amber: #C08A3E; --red: #B5533C; --cream: #F3F0E8;
+    --male: #3F6E8C; --female: #B5637E;
+  }
+  body { background: var(--bg); color: var(--ink); }
+  .font-serif { font-family: Georgia, 'Times New Roman', serif; }
+  input, select, textarea { border-color: var(--border); }
+  .btn-primary { background: var(--green); color: var(--cream); }
+  .tab-active { background: var(--panel); border-color: var(--border); }
+</style>
+</head>
+<body class="font-sans">
+
+<!-- Écran de connexion -->
+<div id="login-gate" class="min-h-screen flex items-center justify-center p-6">
+  <div class="max-w-sm w-full rounded-xl border p-6" style="border-color: var(--border); background: var(--panel)">
+    <h1 class="font-serif text-lg mb-1">À l'orée de la forêt</h1>
+    <p class="text-xs mb-4" style="color: var(--muted)">Connectez-vous avec votre email pour gérer vos réservations.</p>
+    <input id="login-email" type="email" placeholder="votre@email.fr"
+           class="w-full border rounded-lg px-3 py-2 text-sm mb-2" />
+    <button id="btn-login" class="w-full rounded-lg px-3 py-2 text-sm font-medium btn-primary">
+      Recevoir le lien de connexion
+    </button>
+    <p id="login-msg" class="text-xs mt-3" style="color: var(--muted)"></p>
+  </div>
+</div>
+
+<div id="app-content" class="max-w-2xl mx-auto p-4 sm:p-6" style="display:none">
+
+  <div class="flex items-center justify-between mb-5">
+    <h1 class="font-serif text-xl">Mon espace</h1>
+    <button id="btn-logout" class="text-xs" style="color: var(--muted)">Déconnexion</button>
+  </div>
+
+  <!-- Onglets -->
+  <div class="flex gap-1 mb-4 border-b" style="border-color: var(--border-light)">
+    <button data-tab="reserver" class="tab-btn px-3 py-2 text-sm rounded-t-lg border border-b-0">Réserver</button>
+    <button data-tab="chiens" class="tab-btn px-3 py-2 text-sm rounded-t-lg border border-b-0">Mes chiens</button>
+    <button data-tab="historique" class="tab-btn px-3 py-2 text-sm rounded-t-lg border border-b-0">Historique</button>
+  </div>
+
+  <!-- Onboarding (affiché seulement si le client n'a pas encore de fiche) -->
+  <div id="onboarding" class="rounded-xl border p-4 mb-4" style="border-color: var(--border); background: var(--panel); display:none">
+    <h2 class="font-serif text-base mb-2">Bienvenue ! Complétez votre fiche</h2>
+    <p class="text-xs mb-3" style="color: var(--muted)">Nécessaire avant votre première réservation.</p>
+    <div class="space-y-2">
+      <input id="ob-nom" placeholder="Nom" class="w-full border rounded-lg px-3 py-2 text-sm" />
+      <input id="ob-prenom" placeholder="Prénom" class="w-full border rounded-lg px-3 py-2 text-sm" />
+      <input id="ob-telephone" placeholder="Téléphone" class="w-full border rounded-lg px-3 py-2 text-sm" />
+      <input id="ob-adresse" placeholder="Adresse" class="w-full border rounded-lg px-3 py-2 text-sm" />
+      <button id="btn-onboarding" class="w-full rounded-lg px-3 py-2 text-sm font-medium btn-primary">
+        Enregistrer ma fiche
+      </button>
+    </div>
+    <p id="onboarding-msg" class="text-xs mt-2" style="color: var(--muted)"></p>
+  </div>
+
+  <!-- Onglet : Réserver -->
+  <div id="tab-reserver" class="tab-content space-y-3"></div>
+
+  <!-- Onglet : Mes chiens -->
+  <div id="tab-chiens" class="tab-content space-y-3" style="display:none"></div>
+
+  <!-- Onglet : Historique -->
+  <div id="tab-historique" class="tab-content space-y-3" style="display:none"></div>
+
+</div>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+// ============================================================
+// CONFIG — clé publique "anon" uniquement, protégée par RLS
+// ============================================================
+const SUPABASE_URL = 'https://usatdvopaaxrxjiqhgju.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzYXRkdm9wYWF4cnhqaXFoZ2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MjUzNDUsImV4cCI6MjA3NTEwMTM0NX0.D52GPw5yZUJWN1oZD_sop7F7nU9WZLM5OMof1TI3IMc';
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let currentUser = null;
+let currentClient = null; // ligne dans la table clients
+let myDogs = [];
+
+function hexToRgba(hex, alpha) {
+  const h = hex.replace('#', '');
+  const r = parseInt(h.substring(0, 2), 16);
+  const g = parseInt(h.substring(2, 4), 16);
+  const b = parseInt(h.substring(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+function sexColor(sexe) {
+  return sexe === 'M' ? 'var(--male)' : 'var(--female)';
+}
+function paymentInfo(prix, regle) {
+  if (regle >= prix) return { color: 'var(--green)', label: 'réglé' };
+  if (regle > 0) return { color: 'var(--amber)', label: 'acompte versé' };
+  return { color: 'var(--red)', label: 'rien réglé' };
+}
+function statutLabel(statut) {
+  return { en_attente: 'En attente', confirmee: 'Confirmée', annulee: 'Annulée', terminee: 'Terminée' }[statut] ?? statut;
+}
+function statutColor(statut) {
+  return { en_attente: 'var(--amber)', confirmee: 'var(--green)', annulee: 'var(--red)', terminee: 'var(--muted-light)' }[statut] ?? 'var(--muted)';
+}
+
+// ============================================================
+// AUTHENTIFICATION
+// ============================================================
+document.getElementById('btn-login').addEventListener('click', async () => {
+  const email = document.getElementById('login-email').value.trim();
+  const msg = document.getElementById('login-msg');
+  if (!email) return;
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: { emailRedirectTo: window.location.href },
+  });
+  msg.textContent = error ? "Erreur d'envoi, réessayez." : 'Lien envoyé — vérifiez votre boîte mail.';
+});
+
+document.getElementById('btn-logout').addEventListener('click', async () => {
+  await supabase.auth.signOut();
+  window.location.reload();
+});
+
+async function demarrerApp() {
+  document.getElementById('login-gate').style.display = 'none';
+  document.getElementById('app-content').style.display = 'block';
+
+  const { data: { user } } = await supabase.auth.getUser();
+  currentUser = user;
+
+  const { data: clientRow } = await supabase
+    .from('clients')
+    .select('*')
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  currentClient = clientRow;
+
+  if (!currentClient) {
+    document.getElementById('onboarding').style.display = 'block';
+  } else {
+    await chargerTout();
+  }
+}
+
+document.getElementById('btn-onboarding').addEventListener('click', async () => {
+  const nom = document.getElementById('ob-nom').value.trim();
+  const prenom = document.getElementById('ob-prenom').value.trim();
+  const telephone = document.getElementById('ob-telephone').value.trim();
+  const adresse = document.getElementById('ob-adresse').value.trim();
+  const msg = document.getElementById('onboarding-msg');
+
+  if (!nom || !telephone) {
+    msg.textContent = 'Nom et téléphone sont obligatoires.';
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from('clients')
+    .insert({
+      user_id: currentUser.id,
+      nom, prenom, telephone, adresse,
+      email: currentUser.email,
+      onboarding_termine: true,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    msg.textContent = "Erreur : " + error.message;
+    return;
+  }
+
+  currentClient = data;
+  document.getElementById('onboarding').style.display = 'none';
+  await chargerTout();
+});
+
+// ============================================================
+// ONGLETS
+// ============================================================
+document.querySelectorAll('.tab-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('tab-active'));
+    document.querySelectorAll('.tab-content').forEach((c) => (c.style.display = 'none'));
+    btn.classList.add('tab-active');
+    document.getElementById('tab-' + btn.dataset.tab).style.display = 'block';
+  });
+});
+document.querySelector('.tab-btn').classList.add('tab-active');
+
+// ============================================================
+// CHARGEMENT DES DONNÉES
+// ============================================================
+async function chargerTout() {
+  await chargerChiens();
+  renderReserver();
+  renderChiens();
+  await renderHistorique();
+}
+
+async function chargerChiens() {
+  const { data } = await supabase
+    .from('dogs')
+    .select('*')
+    .eq('client_id', currentClient.id)
+    .eq('actif', true);
+  myDogs = data ?? [];
+}
+
+// ============================================================
+// ONGLET : MES CHIENS
+// ============================================================
+function renderChiens() {
+  const el = document.getElementById('tab-chiens');
+  const liste = myDogs.map((d) => `
+    <div class="rounded-xl border p-3" style="border-color: var(--border); background: var(--panel)">
+      <div class="flex items-center justify-between">
+        <span class="font-medium" style="color:${sexColor(d.sexe)}">${d.nom}</span>
+        <span class="text-xs" style="color: var(--muted-light)">${d.race || ''}</span>
+      </div>
+      <p class="text-xs mt-1" style="color: var(--muted)">
+        ${d.allergies ? `Allergies : ${d.allergies}` : 'Pas d\'allergie connue'}
+      </p>
+    </div>`).join('');
+
+  el.innerHTML = `
+    ${liste || `<p class="text-sm" style="color: var(--muted-light)">Aucun chien enregistré.</p>`}
+    <div class="rounded-xl border p-4 mt-2" style="border-color: var(--border); background: var(--panel)">
+      <h3 class="font-serif text-sm mb-2">Ajouter un chien</h3>
+      <div class="space-y-2">
+        <input id="dog-nom" placeholder="Nom du chien" class="w-full border rounded-lg px-3 py-2 text-sm" />
+        <select id="dog-sexe" class="w-full border rounded-lg px-3 py-2 text-sm">
+          <option value="M">Mâle</option>
+          <option value="F">Femelle</option>
+        </select>
+        <input id="dog-race" placeholder="Race (optionnel)" class="w-full border rounded-lg px-3 py-2 text-sm" />
+        <input id="dog-allergies" placeholder="Allergies (optionnel)" class="w-full border rounded-lg px-3 py-2 text-sm" />
+        <button id="btn-add-dog" class="w-full rounded-lg px-3 py-2 text-sm font-medium btn-primary">Ajouter</button>
+        <p id="dog-msg" class="text-xs" style="color: var(--muted)"></p>
+      </div>
+    </div>`;
+
+  document.getElementById('btn-add-dog').addEventListener('click', async () => {
+    const nom = document.getElementById('dog-nom').value.trim();
+    const sexe = document.getElementById('dog-sexe').value;
+    const race = document.getElementById('dog-race').value.trim();
+    const allergies = document.getElementById('dog-allergies').value.trim();
+    const msg = document.getElementById('dog-msg');
+
+    if (!nom) { msg.textContent = 'Le nom est obligatoire.'; return; }
+
+    const { error } = await supabase.from('dogs').insert({
+      client_id: currentClient.id, nom, sexe, race, allergies,
+    });
+
+    if (error) { msg.textContent = 'Erreur : ' + error.message; return; }
+    await chargerChiens();
+    renderChiens();
+    renderReserver(); // met à jour la liste de chiens sélectionnables
+  });
+}
+
+// ============================================================
+// ONGLET : RÉSERVER
+// ============================================================
+function renderReserver() {
+  const el = document.getElementById('tab-reserver');
+
+  if (myDogs.length === 0) {
+    el.innerHTML = `<p class="text-sm" style="color: var(--muted-light)">Ajoutez d'abord un chien dans l'onglet "Mes chiens" avant de réserver.</p>`;
+    return;
+  }
+
+  const checkboxes = myDogs.map((d) => `
+    <label class="flex items-center gap-2 text-sm py-1">
+      <input type="checkbox" value="${d.id}" class="dog-checkbox" />
+      <span style="color:${sexColor(d.sexe)}">${d.nom}</span>
+    </label>`).join('');
+
+  el.innerHTML = `
+    <div class="rounded-xl border p-4" style="border-color: var(--border); background: var(--panel)">
+      <h3 class="font-serif text-sm mb-3">Nouvelle demande de réservation</h3>
+      <label class="text-xs" style="color: var(--muted)">Chien(s) concerné(s)</label>
+      <div class="mb-2">${checkboxes}</div>
+      <label class="text-xs" style="color: var(--muted)">Date d'arrivée</label>
+      <input id="res-debut" type="date" class="w-full border rounded-lg px-3 py-2 text-sm mb-2" />
+      <label class="text-xs" style="color: var(--muted)">Date de départ</label>
+      <input id="res-fin" type="date" class="w-full border rounded-lg px-3 py-2 text-sm mb-2" />
+      <label class="text-xs" style="color: var(--muted)">Remarques (optionnel)</label>
+      <textarea id="res-notes" rows="2" class="w-full border rounded-lg px-3 py-2 text-sm mb-2"></textarea>
+      <button id="btn-reserver" class="w-full rounded-lg px-3 py-2 text-sm font-medium btn-primary">Envoyer la demande</button>
+      <p id="res-msg" class="text-xs mt-2" style="color: var(--muted)"></p>
+      <p class="text-[10px] mt-2" style="color: var(--muted-light)">
+        Votre demande sera examinée puis confirmée par la pension — le tarif vous sera communiqué à ce moment-là.
+      </p>
+    </div>`;
+
+  document.getElementById('btn-reserver').addEventListener('click', async () => {
+    const dogIds = [...document.querySelectorAll('.dog-checkbox:checked')].map((cb) => cb.value);
+    const dateDebut = document.getElementById('res-debut').value;
+    const dateFin = document.getElementById('res-fin').value;
+    const notes = document.getElementById('res-notes').value.trim();
+    const msg = document.getElementById('res-msg');
+
+    if (dogIds.length === 0) { msg.textContent = 'Sélectionnez au moins un chien.'; return; }
+    if (!dateDebut || !dateFin) { msg.textContent = 'Dates obligatoires.'; return; }
+    if (dateFin < dateDebut) { msg.textContent = 'La date de départ doit être après la date d\'arrivée.'; return; }
+
+    const { data: reservation, error: resError } = await supabase
+      .from('reservations_v2')
+      .insert({
+        client_id: currentClient.id,
+        date_debut: dateDebut,
+        date_fin: dateFin,
+        statut: 'en_attente',
+        notes,
+      })
+      .select()
+      .single();
+
+    if (resError) { msg.textContent = 'Erreur : ' + resError.message; return; }
+
+    const rows = dogIds.map((dog_id) => ({ reservation_id: reservation.id, dog_id, prix: 0, montant_regle: 0 }));
+    const { error: rdError } = await supabase.from('reservation_dogs').insert(rows);
+
+    if (rdError) { msg.textContent = 'Erreur : ' + rdError.message; return; }
+
+    msg.textContent = 'Demande envoyée ! Vous serez recontacté(e) pour la confirmation.';
+    document.getElementById('res-debut').value = '';
+    document.getElementById('res-fin').value = '';
+    document.getElementById('res-notes').value = '';
+    document.querySelectorAll('.dog-checkbox').forEach((cb) => (cb.checked = false));
+    await renderHistorique();
+  });
+}
+
+// ============================================================
+// ONGLET : HISTORIQUE
+// ============================================================
+async function renderHistorique() {
+  const el = document.getElementById('tab-historique');
+
+  const { data, error } = await supabase
+    .from('reservations_v2')
+    .select(`
+      id, date_debut, date_fin, statut,
+      reservation_dogs ( prix, montant_regle, dog:dogs ( nom, sexe ) )
+    `)
+    .eq('client_id', currentClient.id)
+    .order('date_debut', { ascending: false });
+
+  if (error) {
+    el.innerHTML = `<p class="text-sm text-red-700">Erreur de chargement.</p>`;
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    el.innerHTML = `<p class="text-sm" style="color: var(--muted-light)">Aucune réservation pour le moment.</p>`;
+    return;
+  }
+
+  el.innerHTML = data.map((r) => {
+    const dogsHtml = r.reservation_dogs.map((rd) => {
+      const pay = paymentInfo(rd.prix, rd.montant_regle);
+      const reste = rd.prix - rd.montant_regle;
+      return `
+        <span class="inline-flex items-center gap-1 mr-2">
+          <span class="w-1.5 h-1.5 rounded-full" style="background:${pay.color}"></span>
+          <span style="color:${sexColor(rd.dog.sexe)}" class="font-medium">${rd.dog.nom}</span>
+          <span class="text-[10px]" style="color: var(--muted)">${rd.prix}€${reste > 0 ? ` (reste ${reste}€)` : ''}</span>
+        </span>`;
+    }).join('');
+
+    return `
+      <div class="rounded-xl border p-3" style="border-color: var(--border); background: var(--panel)">
+        <div class="flex items-center justify-between mb-1">
+          <span class="text-sm font-medium">
+            ${new Date(r.date_debut).toLocaleDateString('fr-FR')} → ${new Date(r.date_fin).toLocaleDateString('fr-FR')}
+          </span>
+          <span class="text-[10px] font-medium px-2 py-0.5 rounded-full"
+                style="background:${hexToRgba('#4A6B4E', 0.15)}; color:${statutColor(r.statut)}">
+            ${statutLabel(r.statut)}
+          </span>
+        </div>
+        <div class="flex flex-wrap">${dogsHtml}</div>
+      </div>`;
+  }).join('');
+}
+
+// ============================================================
+// INIT
+// ============================================================
+(async function init() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) await demarrerApp();
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (session && !currentUser) demarrerApp();
+  });
+})();
+</script>
+</body>
+</html>
