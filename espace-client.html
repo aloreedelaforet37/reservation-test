@@ -124,6 +124,7 @@ document.getElementById('btn-login').addEventListener('click', async () => {
     email,
     options: { emailRedirectTo: window.location.href },
   });
+ console.log('Erreur Supabase (debug) :', error);
   msg.textContent = error ? "Erreur d'envoi, réessayez." : 'Lien envoyé — vérifiez votre boîte mail.';
 });
 
