@@ -476,7 +476,7 @@ document.getElementById('btn-login').addEventListener('click', async () => {
       shouldCreateUser: false, // n'envoie un lien QUE si le compte existe déjà
     },
   });
-  console.log('Erreur Supabase (debug) :', error);
+
   msg.textContent = error
     ? `Erreur : ${error.message} (code: ${error.status ?? error.code ?? '?'})`
     : 'Lien envoyé — vérifiez votre boîte mail.';
