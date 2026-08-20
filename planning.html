@@ -157,7 +157,8 @@ async function chargerReservations() {
   const { data, error } = await supabase.functions.invoke('admin-planning', {
     body: { rangeStart, rangeEnd },
   });
-
+console.log('Plage demandée :', rangeStart, '→', rangeEnd);
+console.log('Réponse Edge Function :', data, error);
   if (error) {
     console.error(error);
     document.getElementById('detail-panel').innerHTML =
