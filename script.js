@@ -5,11 +5,8 @@ window.addEventListener('DOMContentLoaded', () => {
   const SUPABASE_URL = 'https://eugfinnwotdhdtjuywew.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV1Z2Zpbm53b3RkaGR0anV5d2V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1Nzg4MDIsImV4cCI6MjEwNjE1NDgwMn0.Kg0JLyVjp2NCe0BF8MKQxx5Rz8ZfxkaIDE3y50jZUQs';
   const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: {
-    persistSession: false,
-    autoRefreshToken: false
-  }
-});
+  auth: { persistSession: true, autoRefreshToken: true }
+  });
 
   // --- EmailJS ---
   if (typeof emailjs !== "undefined") emailjs.init("t6YY80T3DDql9uy32");
@@ -194,15 +191,14 @@ function hideWaiting() {
     const last = copie.pop();
     return copie.join(", ") + " et " + last;
   }
+  function getNomsChiens() {
+    return [...document.querySelectorAll("#nomsChiensContainer input:checked")]
+      .map(i => i.dataset.nom);
+  }
 
-  function getNomsChiens(formData) {
-    const nb = parseInt(formData.get("nb_chien")) || 1;
-    const noms = [];
-    for (let i = 1; i <= nb; i++) {
-      const n = formData.get(`nom_chien_input_${i}`);
-      if (n) noms.push(n.trim());
-    }
-    return noms;
+  function getIdsChiens() {
+    return [...document.querySelectorAll("#nomsChiensContainer input:checked")]
+      .map(i => i.value);
   }
 
 function crossesClosure(dateA, dateD, noms) {
@@ -301,36 +297,124 @@ function formatLocalDate(d) {
     const dateDepart = document.getElementById("dateDepart");
     const heureArrivee = document.getElementById("heureArrivee");
     const heureDepart = document.getElementById("heureDepart");
+    
+    // --- Authentification OTP ---
+    const COLONNE_NOM_CHIEN = "nom";   // adapte au nom réel de la colonne dans dogs
+    const etapeEmail = document.getElementById("etapeEmail");
+    const etapeCode = document.getElementById("etapeCode");
+    let clientConnecte = null, chiensClient = [], emailOtp = "", minuteurOtp = null;
 
-    const nbChienInput = formReservation.querySelector('input[name="nb_chien"]');
-
-    // --- Noms des chiens dynamiques ---
-    function updateNomChiens() {
-
-      const nb = parseInt(nbChienInput.value) || 1;
-      nomsChiensContainer.innerHTML = "";
-
-      for (let i = 1; i <= nb; i++) {
-
-        const div = document.createElement("div");
-        div.className = "chien-field";
-
-        const label = document.createElement("label");
-        label.textContent = nb === 1 ? "Nom du chien" : `Nom chien ${i}`;
-
-        const input = document.createElement("input");
-        input.type = "text";
-        input.name = `nom_chien_input_${i}`;
-        input.required = true;
-
-        div.appendChild(label);
-        div.appendChild(input);
-        nomsChiensContainer.appendChild(div);
-      }
+    function montrerEtape(etape) {   // "email" | "code" | "form"
+      etapeEmail.hidden = etape !== "email";
+      etapeCode.hidden = etape !== "code";
+      formReservation.hidden = etape !== "form";
     }
 
-    updateNomChiens();
-    nbChienInput.addEventListener("change", updateNomChiens);
+    function compteurRenvoi(secondes) {
+      clearInterval(minuteurOtp);
+      const b = document.getElementById("btnRenvoyer");
+      let reste = secondes;
+      b.disabled = true;
+      b.textContent = `Renvoyer le code (${reste} s)`;
+      minuteurOtp = setInterval(() => {
+        reste--;
+        if (reste <= 0) {
+          clearInterval(minuteurOtp);
+          b.disabled = false;
+          b.textContent = "Renvoyer le code";
+        } else b.textContent = `Renvoyer le code (${reste} s)`;
+      }, 1000);
+    }
+
+    async function envoyerCode() {
+      emailOtp = document.getElementById("emailAuth").value.trim().toLowerCase();
+      if (!/^\S+@\S+\.\S+$/.test(emailOtp)) return showPopup("Adresse e-mail invalide.");
+      const btn = document.getElementById("btnEnvoyerCode");
+      btn.disabled = true;
+      const { error } = await supabaseClient.auth.signInWithOtp({
+        email: emailOtp, options: { shouldCreateUser: true }
+      });
+      btn.disabled = false;
+      if (error) {
+        return showPopup(error.status === 429
+          ? "Trop de demandes, réessayez dans une minute."
+          : "L'envoi du code a échoué, réessayez dans un instant.");
+      }
+      document.getElementById("codeOtp").value = "";
+      montrerEtape("code");
+      compteurRenvoi(60);
+    }
+
+    async function verifierCode() {
+      const token = document.getElementById("codeOtp").value.replace(/\s/g, "");
+      if (token.length < 6) return showPopup("Saisissez le code reçu par e-mail.");
+      const { error } = await supabaseClient.auth.verifyOtp({ email: emailOtp, token, type: "email" });
+      if (error) return showPopup("Code incorrect ou expiré. Vérifiez-le ou demandez-en un nouveau.");
+      await chargerClient();
+    }
+
+    async function refuserConnexion(texte) {
+      await supabaseClient.auth.signOut();
+      montrerEtape("email");
+      showPopup(texte);
+    }
+
+    async function chargerClient() {
+      const { data: c, error } = await supabaseClient.from("clients").select("*").maybeSingle();
+      if (error) return refuserConnexion("Impossible de retrouver votre fiche. Contactez-nous directement.");
+      if (!c) return refuserConnexion("Aucune fiche client n'est associée à cette adresse. Contactez-nous pour créer votre dossier.");
+
+      const { data: chiens, error: e2 } = await supabaseClient
+        .from("dogs").select("*").order(COLONNE_NOM_CHIEN);
+      if (e2) return refuserConnexion("Impossible de charger vos chiens. Réessayez.");
+      if (!chiens.length) return refuserConnexion("Aucun chien n'est enregistré sur votre fiche. Contactez-nous.");
+
+      clientConnecte = c;
+      chiensClient = chiens;
+      afficherFormulaire();
+    }
+
+    function afficherFormulaire() {
+      const nom = clientConnecte.nom_proprietaire
+        || [clientConnecte.prenom, clientConnecte.nom].filter(Boolean).join(" ");
+      const inputNom = formReservation.elements["nom_proprietaire"];
+      inputNom.value = nom;
+      inputNom.readOnly = !!nom;                       // modifiable si la fiche n'a pas de nom
+      formReservation.elements["email"].value = emailOtp;
+      document.getElementById("emailSession").textContent = emailOtp;
+
+      nomsChiensContainer.innerHTML = "";
+      chiensClient.forEach(d => {
+        const l = document.createElement("label");
+        l.className = "chien-choix";
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.value = d.id;
+        cb.dataset.nom = d[COLONNE_NOM_CHIEN] || "";
+        l.append(cb, document.createTextNode(d[COLONNE_NOM_CHIEN] || "Chien sans nom"));
+        nomsChiensContainer.append(l);
+      });
+      if (chiensClient.length === 1) nomsChiensContainer.querySelector("input").checked = true;
+      montrerEtape("form");
+    }
+
+    document.getElementById("btnEnvoyerCode").onclick = envoyerCode;
+    document.getElementById("emailAuth").onkeydown = e => { if (e.key === "Enter") envoyerCode(); };
+    document.getElementById("btnValiderCode").onclick = verifierCode;
+    document.getElementById("codeOtp").onkeydown = e => { if (e.key === "Enter") verifierCode(); };
+    document.getElementById("btnRenvoyer").onclick = envoyerCode;
+    document.getElementById("btnChangerEmail").onclick = () => { clearInterval(minuteurOtp); montrerEtape("email"); };
+    document.getElementById("btnDeconnexion").onclick = async () => {
+      await supabaseClient.auth.signOut();
+      clientConnecte = null;
+      montrerEtape("email");
+    };
+
+    (async () => {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (session) { emailOtp = session.user.email; await chargerClient(); }
+      else montrerEtape("email");
+    })();
 
     const horairesEte = {
       lundi: [["09:00","14:00"],["17:00","18:45"]],
@@ -493,6 +577,11 @@ formReservation.addEventListener("submit", async e => {
   const formData = new FormData(formReservation);
   const nomsChiens = getNomsChiens(formData);
 
+  if (!nomsChiens.length) {
+    hideWaiting();
+    btnSubmit.disabled = false;
+    return showPopup("Sélectionnez au moins un chien.");
+  }
   let erreur = false;
 
   // Contrôle des dates
@@ -606,7 +695,7 @@ if (!erreur && !tousChiensExemptes && dateDepart.value > dateMaxStr) {
   const reservation = {
     nom_proprietaire: formData.get("nom_proprietaire"),
     email: formData.get("email"),
-    nb_chien: parseInt(formData.get("nb_chien")) || 1,
+    nb_chien: nomsChiens.length,
     nom_chien: joinNoms(nomsChiens),
     date_arrivee: formData.get("date_arrivee"),
     heure_arrivee: formData.get("heure_arrivee"),
@@ -616,8 +705,22 @@ if (!erreur && !tousChiensExemptes && dateDepart.value > dateMaxStr) {
   };
 
   try {
-    const { error } = await supabaseClient.from("reservations").insert([reservation]);
+    const { data: resa, error } = await supabaseClient.from("reservations_v2").insert({
+      client_id: clientConnecte.id,
+      date_debut: reservation.date_arrivee,
+      date_fin: reservation.date_depart,
+      heure_arrivee: reservation.heure_arrivee,
+      heure_depart: reservation.heure_depart,
+      remarque: reservation.remarque || null
+    }).select("id").single();
     if (error) throw error;
+
+    const { error: errLiaison } = await supabaseClient.from("reservation_dogs")
+      .insert(getIdsChiens().map(dog_id => ({ reservation_id: resa.id, dog_id })));
+    if (errLiaison) {
+      await supabaseClient.from("reservations_v2").delete().eq("id", resa.id);
+      throw errLiaison;
+    }
 
     await Promise.all([
       // Email pour le client
@@ -677,7 +780,7 @@ if (!erreur && !tousChiensExemptes && dateDepart.value > dateMaxStr) {
     formReservation.reset();
     dateArrivee.value = todayStr;
     dateDepart.value = todayStr;
-    updateNomChiens();
+    afficherFormulaire();
     updateHorairesArrivee();
     updateHorairesDepart();
 
