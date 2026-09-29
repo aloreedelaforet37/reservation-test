@@ -178,6 +178,11 @@ button:hover {
   margin-top: 1rem;
 }
 
+.select-indisponible {
+  color: #999;
+  font-style: italic;
+}
+
 .popup-content button:hover {
   transform: scale(1.02);
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
