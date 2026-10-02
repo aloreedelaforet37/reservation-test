@@ -1,11 +1,24 @@
 // script.js
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').then(reg => reg.update());
+
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (reloaded) return;
+    reloaded = true;
+    location.reload();
+  });
+}
 window.addEventListener('DOMContentLoaded', () => {
 
   // --- Supabase ---
   const SUPABASE_URL = 'https://eugfinnwotdhdtjuywew.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV1Z2Zpbm53b3RkaGR0anV5d2V3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1Nzg4MDIsImV4cCI6MjEwNjE1NDgwMn0.Kg0JLyVjp2NCe0BF8MKQxx5Rz8ZfxkaIDE3y50jZUQs';
   const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: { persistSession: true, autoRefreshToken: true }
+    auth: {
+    persistSession: false,
+    autoRefreshToken: false
+  }
   });
 
   // --- EmailJS ---
@@ -101,7 +114,8 @@ function hideWaiting() {
 
   // Chiens bloqués sur une période donnée, même si la période n'est pas "complète"
   const chiensNonAutorises = [
-    { nom: "Doog", debut: "2026-11-01", fin: "2026-11-05" }
+    { nom: "Doog", debut: "2026-11-01", fin: "2026-11-05" },
+    { nom: "Toutatis", debut: "2026-11-01", fin: "2050-12-31" }
   ];
 
   // Chiens exceptionnellement autorisés sur une période marquée complète
@@ -191,16 +205,35 @@ function hideWaiting() {
     const last = copie.pop();
     return copie.join(", ") + " et " + last;
   }
+  /*
+  //*************************************************
+  // DEBUT NEW
   function getNomsChiens() {
     return [...document.querySelectorAll("#nomsChiensContainer input:checked")]
       .map(i => i.dataset.nom);
   }
-
+  // FIN NEW
+  //*************************************************
+  */
+  function getNomsChiens(formData) {
+    const nb = parseInt(formData.get("nb_chien")) || 1;
+    const noms = [];
+    for (let i = 1; i <= nb; i++) {
+      const n = formData.get(`nom_chien_input_${i}`);
+      if (n) noms.push(n.trim());
+    }
+    return noms;
+  }
+  /*
+  //*************************************************
+  // DEBUT NEW
   function getIdsChiens() {
     return [...document.querySelectorAll("#nomsChiensContainer input:checked")]
       .map(i => i.value);
   }
-
+  // FIN NEW
+  //*************************************************
+  */
 function crossesClosure(dateA, dateD, noms) {
   const dA = new Date(dateA);
   const dD = new Date(dateD);
@@ -297,7 +330,38 @@ function formatLocalDate(d) {
     const dateDepart = document.getElementById("dateDepart");
     const heureArrivee = document.getElementById("heureArrivee");
     const heureDepart = document.getElementById("heureDepart");
-    
+
+    const nbChienInput = formReservation.querySelector('input[name="nb_chien"]');
+
+    // --- Noms des chiens dynamiques ---
+    function updateNomChiens() {
+
+      const nb = parseInt(nbChienInput.value) || 1;
+      nomsChiensContainer.innerHTML = "";
+
+      for (let i = 1; i <= nb; i++) {
+
+        const div = document.createElement("div");
+        div.className = "chien-field";
+
+        const label = document.createElement("label");
+        label.textContent = nb === 1 ? "Nom du chien" : `Nom chien ${i}`;
+
+        const input = document.createElement("input");
+        input.type = "text";
+        input.name = `nom_chien_input_${i}`;
+        input.required = true;
+
+        div.appendChild(label);
+        div.appendChild(input);
+        nomsChiensContainer.appendChild(div);
+      }
+    }
+    updateNomChiens();
+    nbChienInput.addEventListener("change", updateNomChiens);
+    /*
+    //*************************************************
+    // DEBUT NEW
     // --- Authentification OTP ---
     const COLONNE_NOM_CHIEN = "nom";   // adapte au nom réel de la colonne dans dogs
     const etapeEmail = document.getElementById("etapeEmail");
@@ -415,7 +479,9 @@ function formatLocalDate(d) {
       if (session) { emailOtp = session.user.email; await chargerClient(); }
       else montrerEtape("email");
     })();
-
+  // FIN NEW
+  //*************************************************
+  */
     const horairesEte = {
       lundi: [["09:00","14:00"],["17:00","18:45"]],
       mardi: [["09:00","14:00"],["17:00","18:45"]],
@@ -576,12 +642,18 @@ formReservation.addEventListener("submit", async e => {
 
   const formData = new FormData(formReservation);
   const nomsChiens = getNomsChiens(formData);
-
+  /*
+  //*************************************************
+  // DEBUT NEW
   if (!nomsChiens.length) {
     hideWaiting();
     btnSubmit.disabled = false;
     return showPopup("Sélectionnez au moins un chien.");
   }
+  // FIN NEW
+  //*************************************************
+  */
+ 
   let erreur = false;
 
   // Contrôle des dates
@@ -695,7 +767,8 @@ if (!erreur && !tousChiensExemptes && dateDepart.value > dateMaxStr) {
   const reservation = {
     nom_proprietaire: formData.get("nom_proprietaire"),
     email: formData.get("email"),
-    nb_chien: nomsChiens.length,
+   //   nb_chien: nomsChiens.length,  // NEW
+   nb_chien: parseInt(formData.get("nb_chien")) || 1,
     nom_chien: joinNoms(nomsChiens),
     date_arrivee: formData.get("date_arrivee"),
     heure_arrivee: formData.get("heure_arrivee"),
@@ -703,7 +776,9 @@ if (!erreur && !tousChiensExemptes && dateDepart.value > dateMaxStr) {
     heure_depart: formData.get("heure_depart"),
     remarque: formData.get("remarque")
   };
-
+   /*
+  //*************************************************
+  // DEBUT NEW
   try {
     const { data: resa, error } = await supabaseClient.from("reservations_v2").insert({
       client_id: clientConnecte.id,
@@ -721,6 +796,12 @@ if (!erreur && !tousChiensExemptes && dateDepart.value > dateMaxStr) {
       await supabaseClient.from("reservations_v2").delete().eq("id", resa.id);
       throw errLiaison;
     }
+      //*************************************************
+      // FIN NEW
+    */
+      try {
+    const { error } = await supabaseClient.from("reservations").insert([reservation]);
+    if (error) throw error;
 
     await Promise.all([
       // Email pour le client
@@ -780,7 +861,8 @@ if (!erreur && !tousChiensExemptes && dateDepart.value > dateMaxStr) {
     formReservation.reset();
     dateArrivee.value = todayStr;
     dateDepart.value = todayStr;
-    afficherFormulaire();
+    updateNomChiens();
+    // afficherFormulaire();   // NEW
     updateHorairesArrivee();
     updateHorairesDepart();
 
