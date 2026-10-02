@@ -201,35 +201,17 @@ function hideWaiting() {
     const last = copie.pop();
     return copie.join(", ") + " et " + last;
   }
-  /*
-  //*************************************************
-  // DEBUT NEW
+
   function getNomsChiens() {
     return [...document.querySelectorAll("#nomsChiensContainer input:checked")]
       .map(i => i.dataset.nom);
   }
-  // FIN NEW
-  //*************************************************
-  */
-  function getNomsChiens(formData) {
-    const nb = parseInt(formData.get("nb_chien")) || 1;
-    const noms = [];
-    for (let i = 1; i <= nb; i++) {
-      const n = formData.get(`nom_chien_input_${i}`);
-      if (n) noms.push(n.trim());
-    }
-    return noms;
-  }
-  /*
-  //*************************************************
-  // DEBUT NEW
+
   function getIdsChiens() {
     return [...document.querySelectorAll("#nomsChiensContainer input:checked")]
       .map(i => i.value);
   }
-  // FIN NEW
-  //*************************************************
-  */
+
 function crossesClosure(dateA, dateD, noms) {
   const dA = new Date(dateA);
   const dD = new Date(dateD);
@@ -355,9 +337,7 @@ function formatLocalDate(d) {
     }
     updateNomChiens();
     nbChienInput.addEventListener("change", updateNomChiens);
-    /*
-    //*************************************************
-    // DEBUT NEW
+
     // --- Authentification OTP ---
     const COLONNE_NOM_CHIEN = "nom";   // adapte au nom réel de la colonne dans dogs
     const etapeEmail = document.getElementById("etapeEmail");
@@ -475,9 +455,7 @@ function formatLocalDate(d) {
       if (session) { emailOtp = session.user.email; await chargerClient(); }
       else montrerEtape("email");
     })();
-  // FIN NEW
-  //*************************************************
-  */
+
     const horairesEte = {
       lundi: [["09:00","14:00"],["17:00","18:45"]],
       mardi: [["09:00","14:00"],["17:00","18:45"]],
@@ -638,17 +616,12 @@ formReservation.addEventListener("submit", async e => {
 
   const formData = new FormData(formReservation);
   const nomsChiens = getNomsChiens(formData);
-  /*
-  //*************************************************
-  // DEBUT NEW
+
   if (!nomsChiens.length) {
     hideWaiting();
     btnSubmit.disabled = false;
     return showPopup("Sélectionnez au moins un chien.");
   }
-  // FIN NEW
-  //*************************************************
-  */
  
   let erreur = false;
 
@@ -763,8 +736,7 @@ if (!erreur && !tousChiensExemptes && dateDepart.value > dateMaxStr) {
   const reservation = {
     nom_proprietaire: formData.get("nom_proprietaire"),
     email: formData.get("email"),
-   //   nb_chien: nomsChiens.length,  // NEW
-   nb_chien: parseInt(formData.get("nb_chien")) || 1,
+    nb_chien: nomsChiens.length,  // NEW
     nom_chien: joinNoms(nomsChiens),
     date_arrivee: formData.get("date_arrivee"),
     heure_arrivee: formData.get("heure_arrivee"),
@@ -772,9 +744,7 @@ if (!erreur && !tousChiensExemptes && dateDepart.value > dateMaxStr) {
     heure_depart: formData.get("heure_depart"),
     remarque: formData.get("remarque")
   };
-   /*
-  //*************************************************
-  // DEBUT NEW
+
   try {
     const { data: resa, error } = await supabaseClient.from("reservations_v2").insert({
       client_id: clientConnecte.id,
@@ -792,9 +762,7 @@ if (!erreur && !tousChiensExemptes && dateDepart.value > dateMaxStr) {
       await supabaseClient.from("reservations_v2").delete().eq("id", resa.id);
       throw errLiaison;
     }
-      //*************************************************
-      // FIN NEW
-    */
+
       try {
     const { error } = await supabaseClient.from("reservations").insert([reservation]);
     if (error) throw error;
@@ -857,8 +825,7 @@ if (!erreur && !tousChiensExemptes && dateDepart.value > dateMaxStr) {
     formReservation.reset();
     dateArrivee.value = todayStr;
     dateDepart.value = todayStr;
-    updateNomChiens();
-    // afficherFormulaire();   // NEW
+    afficherFormulaire();
     updateHorairesArrivee();
     updateHorairesDepart();
 
