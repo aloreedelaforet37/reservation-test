@@ -733,10 +733,10 @@ if (!erreur && !tousChiensExemptes && dateDepart.value > dateMaxStr) {
     return;  
   }
 
-  const reservation = {
+    const reservation = {
     nom_proprietaire: formData.get("nom_proprietaire"),
     email: formData.get("email"),
-    nb_chien: nomsChiens.length,  // NEW
+    nb_chien: nomsChiens.length,
     nom_chien: joinNoms(nomsChiens),
     date_arrivee: formData.get("date_arrivee"),
     heure_arrivee: formData.get("heure_arrivee"),
@@ -762,10 +762,6 @@ if (!erreur && !tousChiensExemptes && dateDepart.value > dateMaxStr) {
       await supabaseClient.from("reservations_v2").delete().eq("id", resa.id);
       throw errLiaison;
     }
-
-      try {
-    const { error } = await supabaseClient.from("reservations").insert([reservation]);
-    if (error) throw error;
 
     await Promise.all([
       // Email pour le client
@@ -838,8 +834,8 @@ if (!erreur && !tousChiensExemptes && dateDepart.value > dateMaxStr) {
       || JSON.stringify(err);
     showPopup("Erreur : " + message);
   } finally {
-    hideWaiting(); // ← masque la fenêtre d'attente
-    btnSubmit.disabled = false; // ← toujours réactivé, succès ou erreur
+    hideWaiting();
+    btnSubmit.disabled = false;
   }
 });   // fin du addEventListener submit
 }     // fin du if (formReservation)
