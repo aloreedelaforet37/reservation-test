@@ -7,48 +7,18 @@
 <title>Réservation - À l'Orée de la Forêt</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
 <link rel="manifest" href="/reservation-test/manifest.json">
 <link rel="stylesheet" href="style.css?v=20261001">
-<script src="config.js"></script>
+<script src="config.js?v=20261003"></script>
 <script src="script.js?v=20261001"></script>
-
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 
 <style>
-  /* --- Styles pour les champs des chiens --- */
-  #nomsChiensContainer {
-    margin-bottom: 20px;
-  }
-  .chien-field {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 10px;
-  }
-  .chien-field label {
-    font-weight: 500;
-    margin-bottom: 3px;
-  }
-  .chien-field input {
-    padding: 6px 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 14px;
-  }
-  .datetime-group {
-    margin-bottom: 15px;
-  }
-  .datetime-fields {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-  }
-  select, input[type="date"], input[type="number"], textarea {
-    padding: 6px 8px;
-    font-size: 14px;
-  }
+  /* Champs texte créés par updateNomChiens() (remplacés par les cases à cocher après connexion) */
+  #nomsChiensContainer { margin-bottom: 20px; }
+  .chien-field { display: flex; flex-direction: column; margin-bottom: 10px; }
 </style>
 </head>
 
@@ -68,16 +38,40 @@
 </div>
   <div id="encartFermeture"></div>
 
-  <form id="reservationForm">
+  <!-- ÉTAPE 1 : saisie de l'e-mail -->
+  <div id="etapeEmail" hidden>
+    <p class="aide-auth">Pour réserver, saisissez votre adresse e-mail : nous vous envoyons un code de connexion.</p>
+    <label for="emailAuth">Votre adresse e-mail</label>
+    <input type="email" id="emailAuth" autocomplete="email" placeholder="prenom.nom@exemple.fr" />
+    <button type="button" id="btnEnvoyerCode">Recevoir un code</button>
+  </div>
+
+  <!-- ÉTAPE 2 : saisie du code OTP -->
+  <div id="etapeCode" hidden>
+    <p class="aide-auth">Un code vient de vous être envoyé par e-mail (pensez à vérifier vos courriers indésirables).</p>
+    <label for="codeOtp">Code de connexion</label>
+    <input type="text" id="codeOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="123456" />
+    <button type="button" id="btnValiderCode">Valider le code</button>
+    <button type="button" class="btn-lien" id="btnRenvoyer">Renvoyer le code</button>
+    <button type="button" class="btn-lien" id="btnChangerEmail">Changer d'adresse e-mail</button>
+  </div>
+
+  <!-- ÉTAPE 3 : formulaire (affiché après authentification) -->
+  <form id="reservationForm" hidden>
+    <div class="session-bar">
+      <span>Connecté : <span id="emailSession"></span></span>
+      <button type="button" class="btn-lien" id="btnDeconnexion">Se déconnecter</button>
+    </div>
+
     <label>Nom et prénom du propriétaire</label>
     <input type="text" name="nom_proprietaire" required />
 
     <label>Email</label>
-    <input type="email" name="email" required />
+    <input type="email" name="email" readonly required />
 
-    <label>Nombre de chiens</label>
-    <input type="number" name="nb_chien" min="1" value="1" required />
-
+    <label>Chien(s) concerné(s)</label>
+    <!-- nb_chien est requis par script.js (champ technique) -->
+    <input type="hidden" name="nb_chien" value="1" />
     <div id="nomsChiensContainer"></div>
 
     <div class="datetime-group">
@@ -107,12 +101,3 @@
 
 </body>
 </html>
-
-
-
-
-
-
-
-
-
