@@ -1,4 +1,8 @@
-// script.js
+// script.js — VERSION TEST
+// Base = version prod (Telegram via Edge Function send-whatsapp + NOTIF_TELEGRAM).
+// Les blocs propres au test sont repérés par le marqueur [TEST] :
+//   - authentification OTP + sélection des chiens du client
+//   - écriture dans reservations_v2 + reservation_dogs
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').then(reg => reg.update());
 
@@ -16,6 +20,21 @@ window.addEventListener('DOMContentLoaded', () => {
   const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: AUTH_OPTIONS
 });
+
+  // --- Notification Telegram (via Edge Function send-whatsapp) ---
+  async function sendTelegram(texte) {
+    if (!window.APP_CONFIG.NOTIF_TELEGRAM) return; // interrupteur
+    try {
+      const { error } = await supabaseClient.functions.invoke("send-whatsapp", {
+        body: { texte }
+      });
+      if (error) throw error;
+    } catch (e) {
+      let detail = e;
+      try { detail = await e.context.json(); } catch (_) {}
+      console.log("Telegram non envoyé :", detail);
+    }
+  }
 
   // --- EmailJS ---
   if (typeof emailjs !== "undefined") emailjs.init("t6YY80T3DDql9uy32");
@@ -77,7 +96,7 @@ function hideWaiting() {
 
   // --- WhatsApp d'alerte période fermée/complète ---
   async function sendAlertWhatsApp(reservation) {
-    const texte = encodeURIComponent(
+    await sendTelegram(
       `⚠️ Tentative de réservation sur période fermée/complète\n` +
       `🐶 Chien(s) : ${reservation.nom_chien}\n` +
       `👤 Propriétaire : ${reservation.nom_proprietaire}\n` +
@@ -85,12 +104,7 @@ function hideWaiting() {
       `📅 Départ : ${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}\n` +
       `📝 Remarque : ${reservation.remarque}`
     );
-    try {
-      await fetch(`https://api.callmebot.com/whatsapp.php?phone=33627363788&text=${texte}&apikey=1089744`, { mode: "no-cors" });
-    } catch(e) {
-      console.log("WhatsApp d'alerte non envoyé :", e);
-    }
-  }
+  };
 
   // --- Périodes de fermeture ---
   const periodesFermees = [
@@ -201,35 +215,18 @@ function hideWaiting() {
     const last = copie.pop();
     return copie.join(", ") + " et " + last;
   }
-  /*
-  //*************************************************
-  // DEBUT NEW
+
+  // [TEST] Chiens cochés (noms et identifiants) au lieu des champs texte
   function getNomsChiens() {
     return [...document.querySelectorAll("#nomsChiensContainer input:checked")]
       .map(i => i.dataset.nom);
   }
-  // FIN NEW
-  //*************************************************
-  */
-  function getNomsChiens(formData) {
-    const nb = parseInt(formData.get("nb_chien")) || 1;
-    const noms = [];
-    for (let i = 1; i <= nb; i++) {
-      const n = formData.get(`nom_chien_input_${i}`);
-      if (n) noms.push(n.trim());
-    }
-    return noms;
-  }
-  /*
-  //*************************************************
-  // DEBUT NEW
+
   function getIdsChiens() {
     return [...document.querySelectorAll("#nomsChiensContainer input:checked")]
       .map(i => i.value);
   }
-  // FIN NEW
-  //*************************************************
-  */
+
 function crossesClosure(dateA, dateD, noms) {
   const dA = new Date(dateA);
   const dD = new Date(dateD);
@@ -327,39 +324,11 @@ function formatLocalDate(d) {
     const heureArrivee = document.getElementById("heureArrivee");
     const heureDepart = document.getElementById("heureDepart");
 
-    const nbChienInput = formReservation.querySelector('input[name="nb_chien"]');
-
-    // --- Noms des chiens dynamiques ---
-    function updateNomChiens() {
-
-      const nb = parseInt(nbChienInput.value) || 1;
-      nomsChiensContainer.innerHTML = "";
-
-      for (let i = 1; i <= nb; i++) {
-
-        const div = document.createElement("div");
-        div.className = "chien-field";
-
-        const label = document.createElement("label");
-        label.textContent = nb === 1 ? "Nom du chien" : `Nom chien ${i}`;
-
-        const input = document.createElement("input");
-        input.type = "text";
-        input.name = `nom_chien_input_${i}`;
-        input.required = true;
-
-        div.appendChild(label);
-        div.appendChild(input);
-        nomsChiensContainer.appendChild(div);
-      }
-    }
-    updateNomChiens();
-    nbChienInput.addEventListener("change", updateNomChiens);
-    /*
-    //*************************************************
-    // DEBUT NEW
-    // --- Authentification OTP ---
-    const COLONNE_NOM_CHIEN = "nom";   // adapte au nom réel de la colonne dans dogs
+    // =====================================================
+    // [TEST] Authentification OTP + chiens du client
+    // (remplace le nombre de chiens + les champs texte des noms)
+    // =====================================================
+    const COLONNE_NOM_CHIEN = "nom";   // adapter au nom réel de la colonne dans dogs
     const etapeEmail = document.getElementById("etapeEmail");
     const etapeCode = document.getElementById("etapeCode");
     let clientConnecte = null, chiensClient = [], emailOtp = "", minuteurOtp = null;
@@ -475,9 +444,10 @@ function formatLocalDate(d) {
       if (session) { emailOtp = session.user.email; await chargerClient(); }
       else montrerEtape("email");
     })();
-  // FIN NEW
-  //*************************************************
-  */
+    // =====================================================
+    // [TEST] fin du bloc OTP
+    // =====================================================
+
     const horairesEte = {
       lundi: [["09:00","14:00"],["17:00","18:45"]],
       mardi: [["09:00","14:00"],["17:00","18:45"]],
@@ -637,19 +607,15 @@ formReservation.addEventListener("submit", async e => {
   dateDepart.style.color = "";
 
   const formData = new FormData(formReservation);
-  const nomsChiens = getNomsChiens(formData);
-  /*
-  //*************************************************
-  // DEBUT NEW
+  const nomsChiens = getNomsChiens();   // [TEST] chiens cochés
+
+  // [TEST] Au moins un chien sélectionné
   if (!nomsChiens.length) {
     hideWaiting();
     btnSubmit.disabled = false;
     return showPopup("Sélectionnez au moins un chien.");
   }
-  // FIN NEW
-  //*************************************************
-  */
- 
+
   let erreur = false;
 
   // Contrôle des dates
@@ -714,7 +680,6 @@ formReservation.addEventListener("submit", async e => {
   const dateMax = new Date();
   dateMax.setMonth(dateMax.getMonth() + 6);
   const dateMaxStr = dateMax.toISOString().split("T")[0];
-
   const tousChiensExemptes = nomsChiens.every(n => isChienSansLimiteAvance(n));
 
 if (!erreur && !tousChiensExemptes && dateArrivee.value > dateMaxStr) {
@@ -763,8 +728,7 @@ if (!erreur && !tousChiensExemptes && dateDepart.value > dateMaxStr) {
   const reservation = {
     nom_proprietaire: formData.get("nom_proprietaire"),
     email: formData.get("email"),
-   //   nb_chien: nomsChiens.length,  // NEW
-   nb_chien: parseInt(formData.get("nb_chien")) || 1,
+    nb_chien: nomsChiens.length,   // [TEST] déduit des chiens cochés
     nom_chien: joinNoms(nomsChiens),
     date_arrivee: formData.get("date_arrivee"),
     heure_arrivee: formData.get("heure_arrivee"),
@@ -772,10 +736,9 @@ if (!erreur && !tousChiensExemptes && dateDepart.value > dateMaxStr) {
     heure_depart: formData.get("heure_depart"),
     remarque: formData.get("remarque")
   };
-   /*
-  //*************************************************
-  // DEBUT NEW
+
   try {
+    // [TEST] Enregistrement dans reservations_v2 + reservation_dogs
     const { data: resa, error } = await supabaseClient.from("reservations_v2").insert({
       client_id: clientConnecte.id,
       date_debut: reservation.date_arrivee,
@@ -792,12 +755,6 @@ if (!erreur && !tousChiensExemptes && dateDepart.value > dateMaxStr) {
       await supabaseClient.from("reservations_v2").delete().eq("id", resa.id);
       throw errLiaison;
     }
-      //*************************************************
-      // FIN NEW
-    */
-      try {
-    const { error } = await supabaseClient.from("reservations").insert([reservation]);
-    if (error) throw error;
 
     await Promise.all([
       // Email pour le client
@@ -824,7 +781,7 @@ if (!erreur && !tousChiensExemptes && dateDepart.value > dateMaxStr) {
     ]);
 
     // Envoi WhatsApp (séparé, ne bloque pas en cas d'échec)
-    const texte = encodeURIComponent(
+    await sendTelegram(
       `🐶 Nouvelle réservation pour ${reservation.nom_chien}\n` +
       `👤 Propriétaire : ${reservation.nom_proprietaire}\n` +
       `📧 Email : ${reservation.email}\n` +
@@ -832,12 +789,6 @@ if (!erreur && !tousChiensExemptes && dateDepart.value > dateMaxStr) {
       `📅 Départ : ${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}\n` +
       `📝 Remarque : ${reservation.remarque}`
     );
-    try {
-      await fetch(`https://api.callmebot.com/whatsapp.php?phone=33627363788&text=${texte}&apikey=1089744`, { mode: "no-cors" });
-    } catch(e) {
-      console.log("WhatsApp non envoyé :", e);
-    }
-
     // Envoi Google Sheets
     try {
       console.log("Données envoyées :", JSON.stringify(reservation));
@@ -857,8 +808,7 @@ if (!erreur && !tousChiensExemptes && dateDepart.value > dateMaxStr) {
     formReservation.reset();
     dateArrivee.value = todayStr;
     dateDepart.value = todayStr;
-    updateNomChiens();
-    // afficherFormulaire();   // NEW
+    afficherFormulaire();   // [TEST] remet nom, e-mail et cases des chiens
     updateHorairesArrivee();
     updateHorairesDepart();
 
