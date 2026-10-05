@@ -5,5 +5,6 @@ window.APP_CONFIG = {
   AUTH_OPTIONS: {
     persistSession: false,
     autoRefreshToken: false
-  }
+  },
+  NOTIF_TELEGRAM: false   // ← à ajouter ici (true = envoi activé, false = coupé)
 };
