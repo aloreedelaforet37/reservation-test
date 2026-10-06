@@ -29,6 +29,13 @@
             style="background: var(--green); color: var(--cream)">
       Recevoir le lien de connexion
     </button>
+    <input id="login-code" type="text" inputmode="numeric" autocomplete="one-time-code"
+          placeholder="Code reçu par e-mail"
+          class="w-full border rounded-lg px-3 py-2 text-sm mt-2" style="border-color: var(--border); display:none" />
+    <button id="btn-verify" class="w-full rounded-lg px-3 py-2 text-sm font-medium mt-2"
+            style="background: var(--green); color: var(--cream); display:none">
+      Valider le code
+    </button>
     <p id="login-msg" class="text-xs mt-3" style="color: var(--muted)"></p>
   </div>
 </div>
@@ -66,6 +73,7 @@
   <!-- Detail panel (jour sélectionné) — desktop uniquement, la vue mobile liste déjà tous les jours -->
   <div class="mt-4 rounded-xl border p-4 hidden md:block" style="border-color: var(--border); background: var(--panel)" id="detail-panel"></div>
 
+  <div id="legend-statuts" class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-4 text-xs" style="color: var(--muted)"></div>
   <!-- Legend -->
   <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-4 text-xs" style="color: var(--muted)">
     <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm" style="background: var(--green)"></span>Réservation confirmée</div>
@@ -83,6 +91,7 @@
 
 </div><!-- /app-content -->
 
+<script src="config.js"></script>
 <script type="module">
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -93,11 +102,28 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 // "admin-planning", qui vérifie côté serveur que vous êtes bien
 // l'admin avant d'utiliser la service_role key en interne.
 // ============================================================
-const SUPABASE_URL = 'https://usatdvopaaxrxjiqhgju.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzYXRkdm9wYWF4cnhqaXFoZ2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MjUzNDUsImV4cCI6MjA3NTEwMTM0NX0.D52GPw5yZUJWN1oZD_sop7F7nU9WZLM5OMof1TI3IMc';
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const cfg = window.APP_CONFIG;
+const supabase = createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY, {
+  auth: { ...cfg.AUTH_OPTIONS, persistSession: true, autoRefreshToken: true },
+});
 
 const DAY_COUNT = 14;
+
+const STATUTS = {
+  en_attente:         { label: 'En attente',            groupe: 'pending',   bg: '#D98BA3', fg: '#2B231A' }, // rose
+  arrhes_demandees:   { label: "En attente d'arrhes",   groupe: 'pending',   bg: '#E0A030', fg: '#2B231A' }, // jaune/orange
+  attente_adaptation: { label: "En attente d'adaptation", groupe: 'pending', bg: '#2F4A7A', fg: '#F3F0E8' }, // bleu foncé
+  confirmee:          { label: 'Confirmée',             groupe: 'confirmed', bg: '#2F5D3A', fg: '#F3F0E8' }, // vert foncé
+  terminee:           { label: 'Terminée',              groupe: 'confirmed', bg: '#B5533C', fg: '#F3F0E8' }, // rouge
+  reglee:             { label: 'Réglée',                groupe: 'confirmed', bg: '#7FB2D9', fg: '#2B231A' }, // bleu clair
+  annulee:            { label: 'Annulée',               groupe: 'inactive',  bg: '#B9B2A2', fg: '#2B231A' }, // gris
+  supprimee:          { label: 'Supprimée',             groupe: 'inactive',  bg: '#B9B2A2', fg: '#2B231A' }, // gris
+};
+function badgeStatut(r) {
+  const s = STATUTS[r.statut] ?? STATUTS.en_attente;
+  return `<span class="text-[10px] px-1.5 py-0.5 rounded" style="background:${s.bg}; color:${s.fg}">${s.label}</span>`;
+}
+
 let CAPACITY = 6;
 let weekOffset = 0;
 let selectedDayOffset = 0;
@@ -171,7 +197,9 @@ console.log('Réponse Edge Function :', data, error);
     client: r.client?.nom ?? '',
     start: dayIdxOf(r.date_debut),
     end: dayIdxOf(r.date_fin),
-    status: r.statut === 'confirmee' ? 'confirmed' : 'pending', // annulee/terminee filtrées en amont si besoin
+    statut: r.statut,
+    arrhes: Number(r.montant_arrhes) || 0,
+    status: (STATUTS[r.statut] ?? STATUTS.en_attente).groupe, // 'pending' | 'confirmed' | 'inactive'
     arrivalTime: r.heure_arrivee?.slice(0, 5) ?? '',
     departureTime: r.heure_depart?.slice(0, 5) ?? '',
     dogs: r.reservation_dogs.map((rd) => ({
@@ -181,6 +209,15 @@ console.log('Réponse Edge Function :', data, error);
       paid: Number(rd.montant_regle),
     })),
   }));
+  // Répartition des arrhes entre les chiens (au prorata de leur prix)
+  reservations.forEach((r) => {
+    const total = r.dogs.reduce((s, d) => s + d.price, 0);
+    r.dogs.forEach((d) => {
+      d.paid = r.statut === 'reglee'
+        ? d.price
+        : (total > 0 ? Math.round((r.arrhes * d.price / total) * 100) / 100 : 0);
+    });
+  });
 }
 
 // ============================================================
@@ -199,8 +236,9 @@ function occupationJour(dayIdx) {
 
 function occupationDetail(dayIdx) {
   const present = reservations.filter((r) => dayIdx >= r.start && dayIdx <= r.end);
-  const arrivals = present.filter((r) => r.start === dayIdx);
-  const departures = present.filter((r) => r.end === dayIdx);
+  const actives = present.filter((r) => r.status !== 'inactive');
+  const arrivals = actives.filter((r) => r.start === dayIdx);
+  const departures = actives.filter((r) => r.end === dayIdx);
 
   const confirmedCount = present.filter((r) => r.status === 'confirmed').reduce((s, r) => s + r.dogs.length, 0);
   const pendingCount = present.filter((r) => r.status === 'pending').reduce((s, r) => s + r.dogs.length, 0);
@@ -215,8 +253,9 @@ function occupationDetail(dayIdx) {
 
 // ============================================================
 // RENDU : chaîne HTML des chiens d'une réservation (sur une ligne)
-// ============================================================
+// ============================================== ==============
 function renderDogsLabel(dogs) {
+  const m = (n) => String(+Number(n).toFixed(2)).replace('.', ',');
   return dogs
     .map((d, i) => {
       const pay = paymentInfo(d.price, d.paid);
@@ -227,7 +266,7 @@ function renderDogsLabel(dogs) {
           <span class="w-1.5 h-1.5 rounded-full shrink-0" style="background:${pay.color}" title="${pay.label}"></span>
           <span class="text-sm font-medium" style="color:${sexColor(d.sex)}">${d.name}</span>
           <span class="text-[10px]" style="color: var(--muted)">
-            ${d.price}€${reste > 0 ? ` (reste ${reste}€)` : ''}
+            ${m(d.price)}€${d.paid > 0 && reste > 0 ? ` (reste à régler ${m(reste)}€)` : ''}
           </span>
           ${sep}
         </span>`;
@@ -240,7 +279,16 @@ function renderDogsLabel(dogs) {
 // ============================================================
 function renderOccupationStrip() {
   const el = document.getElementById('occupation-strip');
-  let html = `<div class="text-[11px] uppercase tracking-wide flex items-center pl-1" style="color: var(--muted)">Occupation</div>`;
+    let html = '<div></div>';
+  for (let i = 0; i < DAY_COUNT; ) {
+    const d = fmtDay(weekOffset + i);
+    let n = 0;
+    while (i + n < DAY_COUNT && fmtDay(weekOffset + i + n).getMonth() === d.getMonth()) n++;
+    const nomMois = d.toLocaleDateString('fr-FR', { month: n >= 3 ? 'long' : 'short' });
+    html += `<div class="text-[11px] font-medium uppercase tracking-wide text-center border-l" style="grid-column: span ${n}; color: var(--ink); border-color: var(--border)">${nomMois}</div>`;
+    i += n;
+  }
+  html += `<div class="text-[11px] uppercase tracking-wide flex items-center pl-1" style="color: var(--muted)">Occupation</div>`;
 
   for (let i = 0; i < DAY_COUNT; i++) {
     const dayIdx = weekOffset + i;
@@ -282,10 +330,12 @@ function renderGantt() {
   let html = '';
 
   reservations.forEach((r) => {
-    html += `<div class="grid items-center border-b last:border-b-0" style="grid-template-columns: 210px repeat(${DAY_COUNT}, 1fr); border-color: var(--border-light)">`;
+    const info = STATUTS[r.statut] ?? STATUTS.en_attente;
+
+    html += `<div class="relative grid items-center border-b last:border-b-0" style="grid-template-columns: 210px repeat(${DAY_COUNT}, 1fr); border-color: var(--border-light); opacity:${r.status === 'inactive' ? 0.6 : 1}">`;
 
     html += `
-      <div class="pl-3 py-2 flex items-start gap-1.5 sticky left-0" style="background: var(--panel)">
+      <div class="pl-3 py-2 flex items-start gap-1.5 sticky left-0 z-20" style="background: var(--panel)">
         <span class="mt-0.5" style="color: var(--muted-light)">🐾</span>
         <div class="min-w-0">
           <div class="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">${renderDogsLabel(r.dogs)}</div>
@@ -303,19 +353,30 @@ function renderGantt() {
         html += `<div class="h-9 relative px-0.5"></div>`;
         continue;
       }
-      const bg = r.status === 'confirmed' ? 'var(--green)' : 'var(--amber)';
-      const color = r.status === 'confirmed' ? 'var(--cream)' : 'var(--ink)';
       const rounded = `${isStart ? 'rounded-l-md' : ''} ${isEnd ? 'rounded-r-md' : ''}`;
-      const label = r.status === 'pending' ? 'en attente' : (r.dogs.length > 1 ? `${r.dogs.length} chiens` : '');
 
       html += `
         <div class="h-9 relative px-0.5">
-          <div class="absolute inset-y-1.5 ${isStart ? 'left-0.5' : '-left-0.5'} ${isEnd ? 'right-0.5' : '-right-0.5'} ${rounded} flex items-center justify-center"
-               style="background:${bg}; color:${color}">
-            ${isStart ? `<span class="text-[10px] font-medium px-1 truncate">${label}</span>` : ''}
-          </div>
+          <div class="absolute inset-y-1.5 ${isStart ? 'left-0.5' : '-left-0.5'} ${isEnd ? 'right-0.5' : '-right-0.5'} ${rounded}"
+               style="background:${info.bg}"></div>
         </div>`;
     }
+
+    // Libellé complet, posé sur toute la partie visible de la barre
+    const first = Math.max(r.start, weekOffset);
+    const last = Math.min(r.end, weekOffset + DAY_COUNT - 1);
+    if (first <= last) {
+      const col = first - weekOffset;
+      const n = last - first + 1;
+      html += `
+        <div class="absolute z-10 flex items-center pointer-events-none"
+             style="top:0; bottom:0; color:${info.fg};
+                    left:calc(210px + (100% - 210px) * ${col} / ${DAY_COUNT} + 6px);
+                    width:calc((100% - 210px) * ${n} / ${DAY_COUNT} - 12px)">
+          <span class="text-[10px] font-medium leading-tight">${info.label}</span>
+        </div>`;
+    }
+
     html += `</div>`;
   });
 
@@ -339,7 +400,7 @@ function renderDetail() {
       let badges = '';
       if (r.start === dayIdx) badges += `<span class="text-[10px] px-1.5 py-0.5 rounded" style="background:${hexToRgba('#4A6B4E', 0.15)}; color: var(--green)">arrivée ${r.arrivalTime}</span>`;
       if (r.end === dayIdx) badges += `<span class="text-[10px] px-1.5 py-0.5 rounded" style="background:${hexToRgba('#8A7A5C', 0.15)}; color: var(--muted-light)">départ ${r.departureTime}</span>`;
-      if (r.status === 'pending') badges += `<span class="text-[10px] px-1.5 py-0.5 rounded" style="background:${hexToRgba('#C08A3E', 0.2)}; color: var(--amber)">en attente</span>`;
+      badges += badgeStatut(r);
 
       return `
         <div class="flex items-start justify-between text-sm py-1.5 border-b last:border-b-0 gap-2" style="border-color: var(--border-light)">
@@ -348,6 +409,7 @@ function renderDetail() {
             <div class="min-w-0">
               <div class="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">${renderDogsLabel(r.dogs)}</div>
               <div class="text-[10px]" style="color: var(--muted-light)">${r.client}</div>
+              ${renderActions(r)}
             </div>
           </div>
           <div class="flex items-center gap-2 shrink-0 flex-wrap justify-end">${badges}</div>
@@ -400,12 +462,13 @@ function renderMobileList() {
         let badges = '';
         if (r.start === dayIdx) badges += `<span class="text-[10px] px-1.5 py-0.5 rounded" style="background:${hexToRgba('#4A6B4E', 0.15)}; color: var(--green)">arrivée ${r.arrivalTime}</span>`;
         if (r.end === dayIdx) badges += `<span class="text-[10px] px-1.5 py-0.5 rounded" style="background:${hexToRgba('#8A7A5C', 0.15)}; color: var(--muted-light)">départ ${r.departureTime}</span>`;
-        if (r.status === 'pending') badges += `<span class="text-[10px] px-1.5 py-0.5 rounded" style="background:${hexToRgba('#C08A3E', 0.2)}; color: var(--amber)">en attente</span>`;
+        badges += badgeStatut(r);
         return `
           <div class="flex items-start justify-between gap-2 py-1.5 border-b last:border-b-0" style="border-color: var(--border-light)">
             <div class="min-w-0">
               <div class="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">${renderDogsLabel(r.dogs)}</div>
               <div class="text-[10px]" style="color: var(--muted-light)">${r.client}</div>
+              ${renderActions(r)}
             </div>
             <div class="flex flex-wrap gap-1 justify-end shrink-0">${badges}</div>
           </div>`;
@@ -434,6 +497,65 @@ function renderMobileList() {
   el.innerHTML = html;
 }
 
+const ACTIONS = {
+  en_attente:         [['arrhes_demandees', 'Demander des arrhes', 'var(--amber)'], ['attente_adaptation', 'Adaptation à prévoir', 'var(--muted)'], ['confirmee', 'Confirmer', 'var(--green)'], ['annulee', 'Annulée (client)', 'var(--muted)'], ['supprimee', 'Supprimer', 'var(--red)']],
+    arrhes_demandees:   [['confirmee', 'Confirmer (arrhes reçues)', 'var(--green)'], ['attente_adaptation', 'Adaptation à prévoir', 'var(--muted)'], ['annulee', 'Annulée (client)', 'var(--muted)'], ['supprimee', 'Supprimer', 'var(--red)']],
+  attente_adaptation: [['confirmee', 'Confirmer', 'var(--green)'], ['annulee', 'Annulée (client)', 'var(--muted)'], ['supprimee', 'Supprimer', 'var(--red)']],
+  confirmee:          [['reglee', 'Réglée', 'var(--green)'], ['terminee', 'Terminée', 'var(--muted)'], ['annulee', 'Annulée (client)', 'var(--muted)'], ['supprimee', 'Supprimer', 'var(--red)']],
+  reglee:             [['terminee', 'Terminée', 'var(--muted)'], ['supprimee', 'Supprimer', 'var(--red)']],
+  terminee:           [['reglee', 'Réglée', 'var(--green)'], ['supprimee', 'Supprimer', 'var(--red)']],
+  annulee:            [['en_attente', 'Rétablir', 'var(--amber)'], ['supprimee', 'Supprimer', 'var(--red)']],
+  supprimee:          [['en_attente', 'Rétablir', 'var(--amber)']],
+};
+
+function renderActions(r) {
+  const total = r.dogs.reduce((s, d) => s + d.price, 0);
+  const arrhesDefaut = r.arrhes > 0 ? r.arrhes : Math.round(total * 50) / 100; // 50 % du total
+  const champArrhes = r.statut === 'arrhes_demandees'
+    ? `<label class="flex items-center gap-1 text-[11px]" style="color: var(--muted)">
+         Arrhes versées
+         <input type="number" min="0" step="0.01" value="${arrhesDefaut}"
+                class="w-20 border rounded-md px-1.5 py-1 text-[11px]" style="border-color: var(--border); background: white" /> €
+       </label>`
+    : '';
+  const boutons = (ACTIONS[r.statut] ?? [])
+    .map(([statut, label, color]) =>
+      `<button data-statut="${statut}" data-id="${r.id}" class="text-[11px] px-2 py-1 rounded-md border" style="border-color:${color}; color:${color}">${label}</button>`)
+    .join('');
+  return `<div data-actions class="flex flex-wrap items-center gap-1.5 mt-1.5">${champArrhes}${boutons}</div>`;
+}
+
+async function changerStatut(id, statut, arrhes) {
+  const r = reservations.find((x) => String(x.id) === String(id));
+  const confirmationArrhes = r?.statut === 'arrhes_demandees' && statut === 'confirmee';
+  if (confirmationArrhes && !(arrhes > 0)) {
+    alert('Saisissez le montant des arrhes (supérieur à 0) pour confirmer.');
+    return;
+  }
+  if (!confirm(`Passer cette réservation à « ${STATUTS[statut].label} » ?`)) return;
+  const body = { id, statut };
+  if (confirmationArrhes) body.montant_arrhes = arrhes;
+  const { error } = await supabase.functions.invoke('admin-reservation', { body });
+  if (error) { alert('Erreur : ' + error.message); return; }
+  await chargerReservations();
+  renderTout();
+}
+
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-statut]');
+  if (!b) return;
+  const champ = b.closest('[data-actions]')?.querySelector('input[type="number"]');
+  const arrhes = champ ? parseFloat(champ.value) : undefined;
+  changerStatut(b.dataset.id, b.dataset.statut, arrhes);
+});
+
+function renderTotal(r) {
+  const total = r.dogs.reduce((s, d) => s + d.price, 0);
+  return `<div class="text-[11px] mt-0.5" style="color: var(--muted)">
+    ${r.nbJours} jour${r.nbJours > 1 ? 's' : ''} · <span class="font-medium">Total ${eur(total)}</span>${r.arrhes > 0 ? ` · arrhes versées ${eur(r.arrhes)}` : ''}
+  </div>`;
+}
+
 // ============================================================
 // ORCHESTRATION
 // ============================================================
@@ -442,6 +564,10 @@ function renderTout() {
   renderGantt();
   renderDetail();
   renderMobileList();
+  document.getElementById('legend-statuts').innerHTML = Object.values(STATUTS)
+  .filter((s, i, a) => a.findIndex((x) => x.bg === s.bg && x.label !== s.label) === -1 || s.label !== 'Supprimée')
+  .map((s) => `<div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm" style="background:${s.bg}"></span>${s.label}</div>`)
+  .join('');
 }
 
 document.getElementById('btn-prev').addEventListener('click', async () => {
@@ -472,15 +598,24 @@ document.getElementById('btn-login').addEventListener('click', async () => {
   if (!email) return;
   const { error } = await supabase.auth.signInWithOtp({
     email,
-    options: {
-      emailRedirectTo: window.location.href,
-      shouldCreateUser: false, // n'envoie un lien QUE si le compte existe déjà
-    },
+    options: { shouldCreateUser: false },
   });
+  if (error) {
+    msg.textContent = `Erreur : ${error.message}`;
+    return;
+  }
+  msg.textContent = 'Code envoyé — saisissez-le ci-dessous.';
+  document.getElementById('login-code').style.display = 'block';
+  document.getElementById('btn-verify').style.display = 'block';
+});
 
-  msg.textContent = error
-    ? `Erreur : ${error.message} (code: ${error.status ?? error.code ?? '?'})`
-    : 'Lien envoyé — vérifiez votre boîte mail.';
+document.getElementById('btn-verify').addEventListener('click', async () => {
+  const email = document.getElementById('login-email').value.trim();
+  const token = document.getElementById('login-code').value.trim();
+  const msg = document.getElementById('login-msg');
+  const { error } = await supabase.auth.verifyOtp({ email, token, type: 'email' });
+  if (error) msg.textContent = `Code invalide : ${error.message}`;
+  // en cas de succès, onAuthStateChange affiche l'app
 });
 
 (async function init() {
