@@ -634,31 +634,40 @@ if (!erreur && !tousChiensExemptes && dateDepart.value > dateMaxStr) {
     const { error } = await supabaseClient.from("reservations").insert([reservation]);
     if (error) throw error;
 
-    await Promise.all([
-      // Email pour le client
-      emailjs.send("service_22ypgkl", "template_i2nke5k", {
-        to_email: reservation.email,
-        from_name: "Isabelle - Pension À l'Orée de la Forêt",
-        from_email: emailAloree,
-        subject: "Votre réservation pour " + reservation.nom_chien + " a bien été enregistrée",
-        nomChiens: reservation.nom_chien,
-        date_arrivee: `Du ${formatDateFR(reservation.date_arrivee)} à ${reservation.heure_arrivee.replace(":", "h")}`,
-        date_depart: `Au ${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}`
-      }),
-      // Email pour moi
-      emailjs.send("service_22ypgkl", "template_r0e2mju", {
-        to_email: emailAloree,
-        from_name: reservation.nom_proprietaire,
-        from_email: emailAloree,
-        subject: "Nouvelle réservation pour " + reservation.nom_chien,
-        nomChiens: reservation.nom_chien,
-        date_arrivee: `Du ${formatDateFR(reservation.date_arrivee)} à ${reservation.heure_arrivee.replace(":", "h")}`,
-        date_depart: `Au ${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}`,
-        remarque: reservation.remarque
-      })
-    ]);
+    // E-mails : ne bloquent jamais et n'affichent aucune erreur
+    try {
+      const resultats = await Promise.allSettled([
+        // Email pour le client
+        emailjs.send("service_22ypgkl", "template_i2nke5k", {
+          to_email: reservation.email,
+          from_name: "Isabelle - Pension À l'Orée de la Forêt",
+          from_email: emailAloree,
+          subject: "Votre réservation pour " + reservation.nom_chien + " a bien été enregistrée",
+          nomChiens: reservation.nom_chien,
+          date_arrivee: `Du ${formatDateFR(reservation.date_arrivee)} à ${reservation.heure_arrivee.replace(":", "h")}`,
+          date_depart: `Au ${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}`
+        }),
+        // Email pour moi
+        emailjs.send("service_22ypgkl", "template_r0e2mju", {
+          to_email: emailAloree,
+          from_name: reservation.nom_proprietaire,
+          from_email: emailAloree,
+          subject: "Nouvelle réservation pour " + reservation.nom_chien,
+          nomChiens: reservation.nom_chien,
+          date_arrivee: `Du ${formatDateFR(reservation.date_arrivee)} à ${reservation.heure_arrivee.replace(":", "h")}`,
+          date_depart: `Au ${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}`,
+          remarque: reservation.remarque
+        })
+      ]);
+      resultats.forEach((r, i) => {
+        if (r.status === "rejected") console.log("Email non envoyé (" + (i === 0 ? "client" : "admin") + ") :", r.reason);
+      });
+    } catch (e) {
+      // ex. emailjs non chargé : on ignore
+      console.log("Emails non envoyés :", e);
+    }
 
-    // Envoi WhatsApp (séparé, ne bloque pas en cas d'échec)
+    // Telegram (déjà non bloquant : sendTelegram gère ses erreurs)
     await sendTelegram(
       `🐶 Nouvelle réservation pour ${reservation.nom_chien}\n` +
       `👤 Propriétaire : ${reservation.nom_proprietaire}\n` +
