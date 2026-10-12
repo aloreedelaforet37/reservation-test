@@ -35,6 +35,15 @@ window.addEventListener('DOMContentLoaded', () => {
   // --- EmailJS ---
   if (typeof emailjs !== "undefined") emailjs.init("t6YY80T3DDql9uy32");
 
+    // --- Envoi d'e-mail (désactivable via NOTIF_EMAIL: false dans config.js) ---
+  function sendEmail(template, params) {
+    if (window.APP_CONFIG.NOTIF_EMAIL === false) {
+      console.log("[TEST] E-mail non envoyé :", template, params);
+      return Promise.resolve();
+    }
+    return sendEmail( template, params);
+  }
+
   const todayStr = new Date().toISOString().split("T")[0];
   const emailAloree = "a.l.oree.de.la.foret.37@gmail.com";
 
@@ -75,7 +84,7 @@ function hideWaiting() {
   async function sendAlertEmail(reservation) {
     if (typeof emailjs === "undefined") return;
     try {
-      await emailjs.send("service_22ypgkl", "template_r0e2mju", {
+      await sendEmail( "template_r0e2mju", {
         to_email: emailAloree,
         from_name: reservation.nom_proprietaire,
         from_email: emailAloree,
@@ -102,51 +111,55 @@ function hideWaiting() {
     );
   };
 
-  // --- Périodes de fermeture ---
-  const periodesFermees = [
-    { debut: "2026-10-16", fin: "2026-10-24" },
-    { debut: "2026-12-19", fin: "2026-12-27" }
-  ];
+  // --- Règles de réservation (chargées depuis Supabase : table regles_reservation) ---
+  let periodesFermees = [];
+  let datesCompletes = [];
+  let datesIndisponibles = [];
+  let chiensNonAutorises = [];
+  let chiensAutorises = [];
+  let chiensSansLimiteAvance = [];
 
-  const datesCompletes = [
-    { debut: "2026-09-25", fin: "2026-10-06" },
-    { debut: "2026-10-28", fin: "2026-11-01" }
-  ];
+  async function chargerRegles() {
+    const { data, error } = await supabaseClient
+      .from("regles_reservation")
+      .select("type, nom_chien, date_debut, date_fin")
+      .eq("actif", true);
 
-  // Dates isolées non disponibles (arrivée ou départ), sans bloquer les séjours qui les traversent
-  const datesIndisponibles = [
-    "2026-11-11"
-  ];
+    if (error) {
+      console.log("Règles de réservation non chargées :", error);
+      return false;
+    }
 
-  // Chiens bloqués sur une période donnée, même si la période n'est pas "complète"
-  const chiensNonAutorises = [
-    { nom: "Doog", debut: "2026-11-01", fin: "2026-11-05" },
-    { nom: "Toutatis", debut: "2026-11-01", fin: "2050-12-31" }
-  ];
+    const de = t => data.filter(r => r.type === t);
+    periodesFermees = de("fermeture").map(r => ({ debut: r.date_debut, fin: r.date_fin }));
+    datesCompletes = de("complet").map(r => ({ debut: r.date_debut, fin: r.date_fin }));
+    datesIndisponibles = de("date_indisponible").map(r => r.date_debut);
+    chiensNonAutorises = de("chien_non_autorise").map(r => ({ nom: r.nom_chien, debut: r.date_debut, fin: r.date_fin }));
+    chiensAutorises = de("chien_autorise").map(r => ({ nom: r.nom_chien, debut: r.date_debut, fin: r.date_fin }));
+    chiensSansLimiteAvance = de("chien_sans_limite").map(r => r.nom_chien);
+    return true;
+  }
 
-  // Chiens exceptionnellement autorisés sur une période marquée complète
-  const chiensAutorises = [
-    { nom: "Ma", debut: "2026-09-24", fin: "2026-09-27" }
-  ];
-
-  // Chiens exceptionnellement autorisés à réserver au-delà de la limite de 6 mois
-  const chiensSansLimiteAvance = ["Ma"]; // ← liste des noms concernés
+  let reglesChargees = chargerRegles();   // promesse : true si OK, false si échec
 
   const encartFermeture = document.getElementById("encartFermeture");
 
-  if (encartFermeture) {
+  function afficherEncartFermeture() {
+    if (!encartFermeture) return;
+    if (!periodesFermees.length) { encartFermeture.innerHTML = ""; return; }
+    const options = { day: "numeric", month: "long", year: "numeric" };
     let contenu = `<strong>Pour information, la pension sera fermée aux périodes suivantes :</strong><br>`;
-    periodesFermees.forEach(p => {
-      const options = { day: "numeric", month: "long", year: "numeric" };
-
-      let debut = new Date(p.debut).toLocaleDateString("fr-FR", options).replace(/^1 /,"1er ");
-      let fin = new Date(p.fin).toLocaleDateString("fr-FR", options).replace(/^1 /,"1er ");
-
-      contenu += `Du ${debut} au ${fin}<br>`;
-    });
-
+    [...periodesFermees]
+      .sort((a, b) => a.debut.localeCompare(b.debut))
+      .forEach(p => {
+        const debut = new Date(p.debut).toLocaleDateString("fr-FR", options).replace(/^1 /, "1er ");
+        const fin = new Date(p.fin).toLocaleDateString("fr-FR", options).replace(/^1 /, "1er ");
+        contenu += `Du ${debut} au ${fin}<br>`;
+      });
     encartFermeture.innerHTML = contenu;
   }
+
+  reglesChargees.then(ok => { if (ok) afficherEncartFermeture(); });
 
   // --- Fonctions fermeture ---
   function isClosed(dateStr) {
@@ -468,8 +481,11 @@ function isHeureEte(dateStr) {
     dateArrivee.min = todayStr;
     dateDepart.min = todayStr;
 
-    updateHorairesArrivee();
-    updateHorairesDepart();
+    // Les horaires dépendent des fermetures : on les recalcule une fois les règles chargées
+    reglesChargees.then(() => {
+      updateHorairesArrivee();
+      updateHorairesDepart();
+    });
 
 dateArrivee.addEventListener("change", () => {
   dateArrivee.style.color = "";
@@ -501,6 +517,18 @@ formReservation.addEventListener("submit", async e => {
   const btnSubmit = formReservation.querySelector('button[type="submit"]');
   showWaiting(); // ← affiche la fenêtre d'attente
   btnSubmit.disabled = true;
+
+  // Sécurité : on ne valide jamais une réservation sans avoir pu lire les règles
+  let reglesOk = await reglesChargees;
+  if (!reglesOk) {
+    reglesChargees = chargerRegles();
+    reglesOk = await reglesChargees;
+  }
+  if (!reglesOk) {
+    hideWaiting();
+    btnSubmit.disabled = false;
+    return showPopup("Impossible de vérifier les disponibilités pour le moment, réessayez dans un instant ou contactez-nous.");
+  }
 
   // Réinitialiser les couleurs
   dateArrivee.style.color = "";
@@ -638,7 +666,7 @@ if (!erreur && !tousChiensExemptes && dateDepart.value > dateMaxStr) {
     try {
       const resultats = await Promise.allSettled([
         // Email pour le client
-        emailjs.send("service_22ypgkl", "template_i2nke5k", {
+        sendEmail( "template_i2nke5k", {
           to_email: reservation.email,
           from_name: "Isabelle - Pension À l'Orée de la Forêt",
           from_email: emailAloree,
@@ -648,7 +676,7 @@ if (!erreur && !tousChiensExemptes && dateDepart.value > dateMaxStr) {
           date_depart: `Au ${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}`
         }),
         // Email pour moi
-        emailjs.send("service_22ypgkl", "template_r0e2mju", {
+        sendEmail( "template_r0e2mju", {
           to_email: emailAloree,
           from_name: reservation.nom_proprietaire,
           from_email: emailAloree,

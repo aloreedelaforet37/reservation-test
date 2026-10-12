@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#2f4a3a">
+<title>Règles de réservation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f6f2;
+    --surface: #ffffff;
+    --ink: #1b241f;
+    --muted: #5d6b63;
+    --line: #d9e0d9;
+    --accent: #2f4a3a;
+    --accent-ink: #ffffff;
+    --danger: #a3392b;
+    --focus: #1f6f9a;
+    --c-fermeture: #a64b3c;
+    --c-complet: #b7791f;
+    --c-date_indisponible: #5b6b7a;
+    --c-chien_non_autorise: #7a3e5c;
+    --c-chien_autorise: #2f7d4f;
+    --c-chien_sans_limite: #2a7f86;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141a16; --surface: #1d2620; --ink: #e8eee9; --muted: #9baba1; --line: #2d3a31; --accent: #8fbf9f; --accent-ink: #12201a; --danger: #e07a6b; --focus: #6bb6dd;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141a16; --surface: #1d2620; --ink: #e8eee9; --muted: #9baba1;
+    --line: #2d3a31; --accent: #8fbf9f; --accent-ink: #12201a; --danger: #e07a6b; --focus: #6bb6dd;
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  *, *::before, *::after { box-sizing: inherit; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 17px; line-height: 1.45;
+  }
+  :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  [hidden] { display: none !important; }
+  main { max-width: 640px; margin: 0 auto; padding: 16px 16px 96px; }
+  h1 { font-size: 1.5rem; margin: 8px 0 4px; }
+  h2 { font-size: 1.1rem; margin: 0; }
+  p { margin: 0 0 12px; }
+  .muted { color: var(--muted); font-size: .95rem; }
+
+  /* Boutons et champs */
+  button, input, textarea { font: inherit; color: inherit; }
+  .btn {
+    min-height: 48px; padding: 0 18px; border-radius: 12px; border: 1px solid var(--line);
+    background: var(--surface); cursor: pointer; font-weight: 700;
+  }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .btn.danger { color: var(--danger); border-color: var(--danger); background: transparent; }
+  .btn.link { border: none; background: none; min-height: 40px; padding: 0 8px; text-decoration: underline; font-weight: 400; }
+  .btn:disabled { opacity: .55; cursor: default; }
+  label.field { display: block; margin-bottom: 14px; font-weight: 700; }
+  .field input[type="text"], .field input[type="email"], .field input[type="date"], .field textarea {
+    display: block; width: 100%; min-height: 48px; margin-top: 6px; padding: 10px 12px;
+    border: 1px solid var(--line); border-radius: 10px; background: var(--surface); font-weight: 400;
+  }
+  .field textarea { min-height: 76px; resize: vertical; }
+  .row { display: flex; gap: 12px; }
+  .row > * { flex: 1; min-width: 0; }
+
+  /* Connexion */
+  .login { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 22px; margin-top: 28px; }
+  .login .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  #codeOtp { letter-spacing: .3em; font-size: 1.4rem; text-align: center; }
+
+  /* En-tête de l'appli */
+  .topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
+  .topbar .btn { min-height: 40px; font-weight: 400; }
+
+  /* Sections */
+  section.groupe { margin-top: 26px; }
+  .groupe-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding-left: 12px; border-left: 6px solid var(--couleur); margin-bottom: 4px;
+  }
+  .groupe-head .btn { min-height: 44px; }
+  .aide { margin: 0 0 10px 18px; }
+  .liste { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  .regle {
+    display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+    background: var(--surface); border: 1px solid var(--line); border-left: 6px solid var(--couleur);
+    border-radius: 6px 14px 14px 6px; padding: 12px 14px; cursor: pointer; min-height: 60px;
+  }
+  .regle .texte { flex: 1; min-width: 0; }
+  .regle .titre { font-weight: 700; overflow-wrap: anywhere; }
+  .regle .detail { color: var(--muted); font-size: .95rem; overflow-wrap: anywhere; }
+  .regle.inactive, .regle.passee { opacity: .55; }
+  .vide { color: var(--muted); padding: 10px 4px; }
+
+  /* Interrupteur actif */
+  .switch { position: relative; width: 54px; height: 32px; flex: none; }
+  .switch input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+  .switch span { position: absolute; inset: 0; background: var(--line); border-radius: 16px; transition: background .15s; pointer-events: none; }
+  .switch span::after {
+    content: ""; position: absolute; top: 4px; left: 4px; width: 24px; height: 24px;
+    background: #fff; border-radius: 50%; transition: transform .15s;
+  }
+  .switch input:checked + span { background: var(--accent); }
+  .switch input:checked + span::after { transform: translateX(22px); }
+  .switch input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+  /* Feuille de saisie */
+  .voile { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 10; display: flex; align-items: flex-end; justify-content: center; }
+  .feuille {
+    background: var(--bg); width: 100%; max-width: 640px; max-height: 92%; overflow-y: auto;
+    border-radius: 22px 22px 0 0; padding: 20px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+    animation: monte .18s ease-out;
+  }
+  @keyframes monte { from { transform: translateY(24px); opacity: .6; } to { transform: none; opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .feuille { animation: none; } .switch span, .switch span::after { transition: none; } }
+  .feuille .boutons { display: grid; gap: 10px; margin-top: 6px; }
+  .check { display: flex; align-items: center; gap: 12px; min-height: 48px; font-weight: 700; margin-bottom: 14px; }
+  .check input { width: 24px; height: 24px; accent-color: var(--accent); }
+
+  /* Message d'état */
+  #toast {
+    position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+    background: var(--ink); color: var(--bg); padding: 12px 18px; border-radius: 12px; z-index: 20;
+    max-width: calc(100% - 32px); text-align: center;
+  }
+</style>
+</head>
+<body>
+<main>
+
+  <!-- Connexion par code -->
+  <div id="vueLogin" hidden>
+    <h1>Règles de réservation</h1>
+    <p class="muted">Espace réservé à la pension.</p>
+
+    <div class="login" id="etapeEmail">
+      <label class="field">Adresse e-mail
+        <input type="email" id="emailAuth" autocomplete="email" inputmode="email">
+      </label>
+      <button class="btn primary" id="btnEnvoyerCode" type="button">Recevoir un code</button>
+    </div>
+
+    <div class="login" id="etapeCode" hidden>
+      <p>Un code à 6 chiffres a été envoyé à <strong id="emailEnvoye"></strong>.</p>
+      <label class="field">Code reçu
+        <input type="text" id="codeOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="10">
+      </label>
+      <div class="actions">
+        <button class="btn primary" id="btnValiderCode" type="button">Se connecter</button>
+        <button class="btn link" id="btnRenvoyer" type="button">Renvoyer le code</button>
+        <button class="btn link" id="btnChangerEmail" type="button">Changer d'adresse</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Application -->
+  <div id="vueApp" hidden>
+    <div class="topbar">
+      <div>
+        <h1>Règles de réservation</h1>
+        <p class="muted">Ces règles s'appliquent tout de suite au formulaire client.</p>
+      </div>
+      <button class="btn" id="btnDeconnexion" type="button">Quitter</button>
+    </div>
+    <div id="groupes"></div>
+  </div>
+
+</main>
+
+<!-- Feuille d'ajout / modification -->
+<div class="voile" id="voile" hidden>
+  <form class="feuille" id="formRegle" role="dialog" aria-modal="true" aria-labelledby="titreFeuille" novalidate>
+    <h2 id="titreFeuille"></h2>
+    <p class="muted" id="aideFeuille"></p>
+
+    <label class="field" id="champNom">Nom du chien
+      <input type="text" id="nomChien" list="listeChiens" autocomplete="off" autocapitalize="words">
+      <datalist id="listeChiens"></datalist>
+    </label>
+
+    <div class="row" id="champDates">
+      <label class="field" id="champDebut"><span id="libDebut">Du</span>
+        <input type="date" id="dateDebut">
+      </label>
+      <label class="field" id="champFin">Au
+        <input type="date" id="dateFin">
+      </label>
+    </div>
+
+    <label class="field">Note pour moi (facultatif)
+      <textarea id="commentaire" rows="2"></textarea>
+    </label>
+
+    <label class="check"><input type="checkbox" id="actif"> Règle active</label>
+
+    <div class="boutons">
+      <button class="btn primary" type="submit" id="btnEnregistrer">Enregistrer</button>
+      <button class="btn" type="button" id="btnAnnuler">Annuler</button>
+      <button class="btn danger" type="button" id="btnSupprimer" hidden>Supprimer cette règle</button>
+    </div>
+  </form>
+</div>
+
+<div id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+window.addEventListener("DOMContentLoaded", () => {
+
+  // ⚠️ À vérifier : adresse e-mail du compte administrateur.
+  // Elle doit être IDENTIQUE à celle de la policy SQL "admin_ecriture".
+  const ADMIN_EMAIL = "a.l.oree.de.la.foret.37@gmail.com";
+
+  const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.APP_CONFIG;
+  // Session conservée sur cet appareil : pas de code à ressaisir à chaque ouverture.
+  const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession: true, autoRefreshToken: true }
+  });
+
+  // --- Types de règles ---
+  const TYPES = [
+    { id: "fermeture", titre: "Fermetures", ajout: "Ajouter une fermeture",
+      aide: "La pension est fermée : aucune arrivée ni départ, et aucun séjour ne peut traverser la période.",
+      nom: false, dates: "periode" },
+    { id: "complet", titre: "Périodes complètes", ajout: "Ajouter une période complète",
+      aide: "Plus de place : arrivée, départ ou séjour sur la période refusé, sauf chiens autorisés ci-dessous.",
+      nom: false, dates: "periode" },
+    { id: "date_indisponible", titre: "Dates indisponibles", ajout: "Ajouter une date",
+      aide: "Jour isolé sans arrivée ni départ. Un séjour peut le traverser.",
+      nom: false, dates: "jour" },
+    { id: "chien_non_autorise", titre: "Chiens bloqués", ajout: "Bloquer un chien",
+      aide: "Ce chien ne peut pas réserver sur la période, même si elle n'est pas complète.",
+      nom: true, dates: "periode" },
+    { id: "chien_autorise", titre: "Chiens autorisés en période complète", ajout: "Autoriser un chien",
+      aide: "Ce chien peut réserver malgré une période complète, sur les dates indiquées.",
+      nom: true, dates: "periode" },
+    { id: "chien_sans_limite", titre: "Réservation à plus de 6 mois", ajout: "Ajouter un chien",
+      aide: "Ce chien peut réserver plus de 6 mois à l'avance.",
+      nom: true, dates: "aucune" }
+  ];
+  const typeDe = id => TYPES.find(t => t.id === id);
+
+  let regles = [];
+  let enEdition = null;       // { type, regle|null }
+  let minuteur = null;
+  let emailOtp = "";
+  const $ = id => document.getElementById(id);
+  const aujourdhui = new Date().toISOString().split("T")[0];
+
+  // --- Utilitaires ---
+  function echapper(s) {
+    return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+  function dateFR(d, long) {
+    return new Date(d + "T00:00:00").toLocaleDateString("fr-FR",
+      { day: "numeric", month: long ? "long" : "short", year: "numeric" }).replace(/^1 /, "1er ");
+  }
+  function texteDates(r) {
+    if (!r.date_debut) return "";
+    if (!r.date_fin || r.date_fin === r.date_debut) return dateFR(r.date_debut);
+    if (r.date_fin >= "2050-01-01") return "À partir du " + dateFR(r.date_debut);
+    return "Du " + dateFR(r.date_debut) + " au " + dateFR(r.date_fin);
+  }
+  let timerToast = null;
+  function toast(msg) {
+    const t = $("toast");
+    t.textContent = msg; t.hidden = false;
+    clearTimeout(timerToast);
+    timerToast = setTimeout(() => { t.hidden = true; }, 3500);
+  }
+  function vue(nom) {   // "login" | "app"
+    $("vueLogin").hidden = nom !== "login";
+    $("vueApp").hidden = nom !== "app";
+  }
+  function etape(nom) { // "email" | "code"
+    $("etapeEmail").hidden = nom !== "email";
+    $("etapeCode").hidden = nom !== "code";
+  }
+
+  // --- Connexion OTP ---
+  function compteurRenvoi(secondes) {
+    clearInterval(minuteur);
+    const b = $("btnRenvoyer");
+    let reste = secondes;
+    b.disabled = true;
+    b.textContent = `Renvoyer le code (${reste} s)`;
+    minuteur = setInterval(() => {
+      reste--;
+      if (reste <= 0) {
+        clearInterval(minuteur);
+        b.disabled = false;
+        b.textContent = "Renvoyer le code";
+      } else b.textContent = `Renvoyer le code (${reste} s)`;
+    }, 1000);
+  }
+
+  async function envoyerCode() {
+    emailOtp = $("emailAuth").value.trim().toLowerCase();
+    if (!/^\S+@\S+\.\S+$/.test(emailOtp)) return toast("Adresse e-mail invalide.");
+    if (emailOtp !== ADMIN_EMAIL.toLowerCase()) return toast("Cette adresse n'a pas accès à cet espace.");
+    const btn = $("btnEnvoyerCode");
+    btn.disabled = true;
+    // shouldCreateUser: false → cette page ne crée jamais de nouveau compte
+    const { error } = await db.auth.signInWithOtp({ email: emailOtp, options: { shouldCreateUser: false } });
+    btn.disabled = false;
+    if (error) {
+      return toast(error.status === 429
+        ? "Trop de demandes, réessayez dans une minute."
+        : "L'envoi du code a échoué, réessayez dans un instant.");
+    }
+    $("emailEnvoye").textContent = emailOtp;
+    $("codeOtp").value = "";
+    etape("code");
+    compteurRenvoi(60);
+    $("codeOtp").focus();
+  }
+
+  async function verifierCode() {
+    const token = $("codeOtp").value.replace(/\s/g, "");
+    if (token.length < 6) return toast("Saisissez le code reçu par e-mail.");
+    const { error } = await db.auth.verifyOtp({ email: emailOtp, token, type: "email" });
+    if (error) return toast("Code incorrect ou expiré. Vérifiez-le ou demandez-en un nouveau.");
+    await demarrer();
+  }
+
+  async function deconnecter() {
+    await db.auth.signOut();
+    regles = [];
+    etape("email");
+    vue("login");
+  }
+
+  // --- Données ---
+  async function charger() {
+    const { data, error } = await db.from("regles_reservation")
+      .select("*").order("date_debut", { ascending: true, nullsFirst: false });
+    if (error) {
+      console.log("Chargement des règles :", error);
+      toast("Impossible de charger les règles. Vérifiez la connexion et les droits.");
+      return;
+    }
+    regles = data;
+    afficher();
+  }
+
+  async function chargerNomsChiens() {
+    // Facultatif : suggestions de noms si la policy autorise l'admin à lire la table dogs
+    const { data, error } = await db.from("dogs").select("nom");
+    if (error || !data) return;
+    const noms = [...new Set(data.map(d => d.nom).filter(Boolean))].sort((a, b) => a.localeCompare(b, "fr"));
+    $("listeChiens").innerHTML = noms.map(n => `<option value="${echapper(n)}">`).join("");
+  }
+
+  // --- Affichage ---
+  function afficher() {
+    $("groupes").innerHTML = TYPES.map(t => {
+      const lignes = regles.filter(r => r.type === t.id);
+      const items = lignes.map(r => {
+        const passee = r.date_fin && r.date_fin < aujourdhui;
+        const titre = t.nom ? r.nom_chien : texteDates(r);
+        const details = [t.nom ? texteDates(r) : "", r.commentaire,
+                         passee ? "Terminée" : "", !r.actif ? "Désactivée" : ""].filter(Boolean).join(" • ");
+        return `<li>
+          <div class="regle ${r.actif ? "" : "inactive"} ${passee ? "passee" : ""}" role="button" tabindex="0"
+               data-edit="${r.id}" aria-label="Modifier : ${echapper(titre)}">
+            <div class="texte">
+              <div class="titre">${echapper(titre)}</div>
+              ${details ? `<div class="detail">${echapper(details)}</div>` : ""}
+            </div>
+            <label class="switch" title="Règle active">
+              <input type="checkbox" data-toggle="${r.id}" ${r.actif ? "checked" : ""} aria-label="Règle active">
+              <span></span>
+            </label>
+          </div>
+        </li>`;
+      }).join("");
+      return `<section class="groupe" style="--couleur: var(--c-${t.id})">
+        <div class="groupe-head">
+          <h2>${echapper(t.titre)}</h2>
+          <button class="btn" type="button" data-add="${t.id}">Ajouter</button>
+        </div>
+        <p class="muted aide">${echapper(t.aide)}</p>
+        <ul class="liste">${items || `<li class="vide">Aucune règle. Utilisez « Ajouter » pour en créer une.</li>`}</ul>
+      </section>`;
+    }).join("");
+  }
+
+  // --- Feuille de saisie ---
+  function ouvrir(typeId, regle) {
+    const t = typeDe(typeId);
+    enEdition = { type: typeId, regle: regle || null };
+    $("titreFeuille").textContent = regle ? "Modifier la règle" : t.ajout;
+    $("aideFeuille").textContent = t.aide;
+    $("champNom").hidden = !t.nom;
+    $("champDates").hidden = t.dates === "aucune";
+    $("champFin").hidden = t.dates !== "periode";
+    $("libDebut").textContent = t.dates === "jour" ? "Date" : "Du";
+    $("nomChien").value = regle?.nom_chien || "";
+    $("dateDebut").value = regle?.date_debut || "";
+    $("dateFin").value = regle?.date_fin || "";
+    $("commentaire").value = regle?.commentaire || "";
+    $("actif").checked = regle ? regle.actif : true;
+    $("btnSupprimer").hidden = !regle;
+    $("voile").hidden = false;
+    document.body.style.overflow = "hidden";
+    (t.nom ? $("nomChien") : $("dateDebut")).focus();
+  }
+
+  function fermer() {
+    $("voile").hidden = true;
+    document.body.style.overflow = "";
+    enEdition = null;
+  }
+
+  async function enregistrer(e) {
+    e.preventDefault();
+    const t = typeDe(enEdition.type);
+    const nom = $("nomChien").value.trim();
+    const debut = $("dateDebut").value;
+    let fin = $("dateFin").value;
+
+    if (t.nom && !nom) return toast("Indiquez le nom du chien.");
+    if (t.dates !== "aucune" && !debut) return toast("Indiquez la date de début.");
+    if (t.dates === "periode") {
+      if (!fin) fin = debut;
+      if (fin < debut) return toast("La date de fin doit être après la date de début.");
+    }
+    if (t.dates === "jour") fin = debut;
+
+    const ligne = {
+      type: t.id,
+      nom_chien: t.nom ? nom : null,
+      date_debut: t.dates === "aucune" ? null : debut,
+      date_fin: t.dates === "aucune" ? null : fin,
+      commentaire: $("commentaire").value.trim() || null,
+      actif: $("actif").checked
+    };
+
+    const btn = $("btnEnregistrer");
+    btn.disabled = true;
+    const req = enEdition.regle
+      ? db.from("regles_reservation").update(ligne).eq("id", enEdition.regle.id)
+      : db.from("regles_reservation").insert(ligne);
+    const { error } = await req;
+    btn.disabled = false;
+    if (error) {
+      console.log("Enregistrement :", error);
+      return toast("Enregistrement impossible : " + (error.message || "erreur inconnue"));
+    }
+    fermer();
+    toast("Règle enregistrée.");
+    await charger();
+  }
+
+  async function supprimer() {
+    if (!enEdition?.regle) return;
+    if (!confirm("Supprimer définitivement cette règle ?")) return;
+    const { error } = await db.from("regles_reservation").delete().eq("id", enEdition.regle.id);
+    if (error) return toast("Suppression impossible : " + (error.message || "erreur inconnue"));
+    fermer();
+    toast("Règle supprimée.");
+    await charger();
+  }
+
+  async function basculer(id, actif) {
+    const { error } = await db.from("regles_reservation").update({ actif }).eq("id", id);
+    if (error) toast("Modification impossible : " + (error.message || "erreur inconnue"));
+    await charger();
+  }
+
+  // --- Événements ---
+  $("btnEnvoyerCode").onclick = envoyerCode;
+  $("emailAuth").onkeydown = e => { if (e.key === "Enter") envoyerCode(); };
+  $("btnValiderCode").onclick = verifierCode;
+  $("codeOtp").onkeydown = e => { if (e.key === "Enter") verifierCode(); };
+  $("btnRenvoyer").onclick = envoyerCode;
+  $("btnChangerEmail").onclick = () => { clearInterval(minuteur); etape("email"); };
+  $("btnDeconnexion").onclick = deconnecter;
+
+  $("groupes").addEventListener("click", e => {
+    const interrupteur = e.target.closest("[data-toggle]");
+    if (interrupteur) { basculer(Number(interrupteur.dataset.toggle), interrupteur.checked); return; }
+    if (e.target.closest(".switch")) return;
+    const ajout = e.target.closest("[data-add]");
+    if (ajout) return ouvrir(ajout.dataset.add, null);
+    const carte = e.target.closest("[data-edit]");
+    if (carte) {
+      const r = regles.find(x => x.id === Number(carte.dataset.edit));
+      if (r) ouvrir(r.type, r);
+    }
+  });
+  $("groupes").addEventListener("keydown", e => {
+    if ((e.key === "Enter" || e.key === " ") && e.target.matches("[data-edit]")) {
+      e.preventDefault();
+      const r = regles.find(x => x.id === Number(e.target.dataset.edit));
+      if (r) ouvrir(r.type, r);
+    }
+  });
+
+  $("formRegle").addEventListener("submit", enregistrer);
+  $("btnAnnuler").onclick = fermer;
+  $("btnSupprimer").onclick = supprimer;
+  $("voile").addEventListener("click", e => { if (e.target === $("voile")) fermer(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("voile").hidden) fermer(); });
+
+  // --- Démarrage ---
+  async function demarrer() {
+    const { data: { session } } = await db.auth.getSession();
+    if (!session) { etape("email"); return vue("login"); }
+    if ((session.user.email || "").toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+      await db.auth.signOut();
+      etape("email"); vue("login");
+      return toast("Ce compte n'a pas accès à cet espace.");
+    }
+    vue("app");
+    await charger();
+    chargerNomsChiens();
+  }
+
+  demarrer();
+
+});
+</script>
+</body>
+</html>
