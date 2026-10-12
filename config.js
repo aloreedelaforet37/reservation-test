@@ -6,5 +6,6 @@ window.APP_CONFIG = {
     persistSession: false,
     autoRefreshToken: false
   },
-  NOTIF_TELEGRAM: false   // ← à ajouter ici (true = envoi activé, false = coupé)
+  NOTIF_TELEGRAM: false,   // ← à ajouter ici (true = envoi activé, false = coupé)
+  NOTIF_EMAIL: false
 };
