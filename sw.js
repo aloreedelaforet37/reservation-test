@@ -1,4 +1,4 @@
-const VERSION = 'v2026-10-01-1';   // à changer à chaque déploiement
+const VERSION = 'v2026-11-24-1';   // à changer à chaque déploiement
 const CACHE = 'kennel-' + VERSION;
 
 self.addEventListener('install', (e) => {

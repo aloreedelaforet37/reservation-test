@@ -41,7 +41,7 @@ window.addEventListener('DOMContentLoaded', () => {
       console.log("[TEST] E-mail non envoyé :", template, params);
       return Promise.resolve();
     }
-    return sendEmail( template, params);
+    return emailjs.send(window.APP_CONFIG.EMAILJS_SERVICE_ID, template, params);
   }
 
   const todayStr = new Date().toISOString().split("T")[0];
@@ -84,7 +84,7 @@ function hideWaiting() {
   async function sendAlertEmail(reservation) {
     if (typeof emailjs === "undefined") return;
     try {
-      await sendEmail( "template_r0e2mju", {
+      await sendEmail( window.APP_CONFIG.EMAILJS_TEMPLATE_PENSION, {
         to_email: emailAloree,
         from_name: reservation.nom_proprietaire,
         from_email: emailAloree,
@@ -666,7 +666,7 @@ if (!erreur && !tousChiensExemptes && dateDepart.value > dateMaxStr) {
     try {
       const resultats = await Promise.allSettled([
         // Email pour le client
-        sendEmail( "template_i2nke5k", {
+        sendEmail( window.APP_CONFIG.EMAILJS_TEMPLATE_CLIENT, {
           to_email: reservation.email,
           from_name: "Isabelle - Pension À l'Orée de la Forêt",
           from_email: emailAloree,
@@ -676,7 +676,7 @@ if (!erreur && !tousChiensExemptes && dateDepart.value > dateMaxStr) {
           date_depart: `Au ${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}`
         }),
         // Email pour moi
-        sendEmail( "template_r0e2mju", {
+        sendEmail( window.APP_CONFIG.EMAILJS_TEMPLATE_PENSION, {
           to_email: emailAloree,
           from_name: reservation.nom_proprietaire,
           from_email: emailAloree,
