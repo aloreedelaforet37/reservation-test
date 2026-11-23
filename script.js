@@ -45,7 +45,7 @@ window.addEventListener('DOMContentLoaded', () => {
       console.log("[TEST] E-mail non envoyé :", template, params);
       return Promise.resolve();
     }
-    return sendEmail( template, params);
+    return emailjs.send(window.APP_CONFIG.EMAILJS_SERVICE_ID, template, params);
   }
   const todayStr = new Date().toISOString().split("T")[0];
   const emailAloree = "a.l.oree.de.la.foret.37@gmail.com";
@@ -87,7 +87,7 @@ function hideWaiting() {
   async function sendAlertEmail(reservation) {
     if (typeof emailjs === "undefined") return;
     try {
-      await sendEmail( "template_r0e2mju", {
+      await sendEmail( window.APP_CONFIG.EMAILJS_TEMPLATE_PENSION, {
         to_email: emailAloree,
         from_name: reservation.nom_proprietaire,
         from_email: emailAloree,
@@ -761,6 +761,38 @@ if (!erreur && !tousChiensExemptes && dateDepart.value > dateMaxStr) {
     if (errLiaison) {
       await supabaseClient.from("reservations_v2").delete().eq("id", resa.id);
       throw errLiaison;
+
+    // E-mails : ne bloquent jamais et n'affichent aucune erreur
+    try {
+      const resultats = await Promise.allSettled([
+        // Email pour le client
+        sendEmail( window.APP_CONFIG.EMAILJS_TEMPLATE_CLIENT, {
+          to_email: reservation.email,
+          from_name: "Isabelle - Pension À l'Orée de la Forêt",
+          from_email: emailAloree,
+          subject: "Votre réservation pour " + reservation.nom_chien + " a bien été enregistrée",
+          nomChiens: reservation.nom_chien,
+          date_arrivee: `Du ${formatDateFR(reservation.date_arrivee)} à ${reservation.heure_arrivee.replace(":", "h")}`,
+          date_depart: `Au ${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}`
+        }),
+        // Email pour moi
+        sendEmail( window.APP_CONFIG.EMAILJS_TEMPLATE_PENSION, {
+          to_email: emailAloree,
+          from_name: reservation.nom_proprietaire,
+          from_email: emailAloree,
+          subject: "Nouvelle réservation pour " + reservation.nom_chien,
+          nomChiens: reservation.nom_chien,
+          date_arrivee: `Du ${formatDateFR(reservation.date_arrivee)} à ${reservation.heure_arrivee.replace(":", "h")}`,
+          date_depart: `Au ${formatDateFR(reservation.date_depart)} à ${reservation.heure_depart.replace(":", "h")}`,
+          remarque: reservation.remarque
+        })
+      ]);
+      resultats.forEach((r, i) => {
+        if (r.status === "rejected") console.log("Email non envoyé (" + (i === 0 ? "client" : "admin") + ") :", r.reason);
+      });
+    } catch (e) {
+      // ex. emailjs non chargé : on ignore
+      console.log("Emails non envoyés :", e);
     }
 
     await Promise.all([

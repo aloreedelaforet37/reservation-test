@@ -7,5 +7,8 @@ window.APP_CONFIG = {
     autoRefreshToken: false
   },
   NOTIF_TELEGRAM: false,   // ← à ajouter ici (true = envoi activé, false = coupé)
-  NOTIF_EMAIL: false
+  NOTIF_EMAIL: false,
+  EMAILJS_SERVICE_ID: "service_22ypgkl",
+  EMAILJS_TEMPLATE_PENSION: "template_r0e2mju",
+  EMAILJS_TEMPLATE_CLIENT: "template_i2nke5k"
 };

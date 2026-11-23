@@ -1,4 +1,4 @@
-const VERSION = 'v2026-10-04-1';   // à changer à chaque déploiement
+const VERSION = 'v2026-11-24-1';   // à changer à chaque déploiement
 const PREFIX = 'kennel-test-';      // propre à l'environnement de test (la prod garde un autre préfixe)
 const CACHE = PREFIX + VERSION;
 
